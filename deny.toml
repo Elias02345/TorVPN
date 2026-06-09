@@ -1,0 +1,22 @@
+[licenses]
+allow = [
+  "Apache-2.0",
+  "BSD-2-Clause",
+  "BSD-3-Clause",
+  "GPL-2.0",
+  "GPL-2.0-or-later",
+  "GPL-3.0",
+  "GPL-3.0-or-later",
+  "ISC",
+  "MIT",
+  "Unicode-3.0",
+  "Zlib",
+]
+confidence-threshold = 0.8
+
+[bans]
+multiple-versions = "warn"
+wildcards = "deny"
+
+[advisories]
+ignore = []

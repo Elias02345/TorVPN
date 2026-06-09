@@ -1,0 +1,35 @@
+name: Leak report
+description: Report a suspected IP, DNS, UDP, IPv6, or kill-switch leak.
+title: "[Leak]: "
+labels: ["security", "leak"]
+body:
+  - type: dropdown
+    id: leak_type
+    attributes:
+      label: Leak type
+      options:
+        - IP
+        - DNS
+        - IPv6
+        - UDP
+        - Kill-switch
+        - Other
+    validations:
+      required: true
+  - type: dropdown
+    id: platform
+    attributes:
+      label: Platform
+      options:
+        - Android
+        - Linux
+        - Windows
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Reproduction steps
+      description: Include only redacted, non-sensitive information.
+    validations:
+      required: true

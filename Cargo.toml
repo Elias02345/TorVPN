@@ -1,0 +1,15 @@
+[workspace]
+resolver = "2"
+members = [
+    "core/tor_tunnel_core",
+    "core/tor_tunnel_tor_manager",
+    "core/tor_tunnel_tunnel_engine",
+    "core/tor_tunnel_platform_contracts",
+    "core/tor_tunnel_diagnostics",
+    "core/tor_tunnel_leaktest",
+]
+
+[workspace.package]
+edition = "2021"
+license = "GPL-2.0-or-later"
+repository = "https://github.com/tortunnel/tortunnel"

@@ -1,0 +1,15 @@
+app-id: org.tortunnel.TorTunnel
+runtime: org.freedesktop.Platform
+runtime-version: "24.08"
+sdk: org.freedesktop.Sdk
+command: tortunnel
+finish-args:
+  - --share=network
+  - --socket=wayland
+  - --socket=fallback-x11
+  - --device=dri
+modules:
+  - name: tortunnel
+    buildsystem: simple
+    build-commands:
+      - echo "Flatpak manifest contract. Add Flutter Linux bundle and host helper integration before release."

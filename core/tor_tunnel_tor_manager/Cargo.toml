@@ -1,0 +1,10 @@
+[package]
+name = "tor_tunnel_tor_manager"
+version = "0.1.0"
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "Tor daemon configuration and ControlPort contracts for TorTunnel."
+
+[dependencies]
+serde = { version = "1.0", features = ["derive"] }

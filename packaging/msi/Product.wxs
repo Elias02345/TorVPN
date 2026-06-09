@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+  <Product Id="*" Name="TorTunnel" Language="1033" Version="0.1.0" Manufacturer="TorTunnel" UpgradeCode="11111111-2222-3333-4444-555555555555">
+    <Package InstallerVersion="500" Compressed="yes" InstallScope="perMachine" />
+    <MajorUpgrade DowngradeErrorMessage="A newer version of TorTunnel is already installed." />
+    <MediaTemplate EmbedCab="yes" />
+    <!-- Stable MSI must install signed Flutter app, Rust core DLL, Windows service, and reviewed Wintun component. -->
+    <Feature Id="ProductFeature" Title="TorTunnel" Level="1" />
+  </Product>
+</Wix>
