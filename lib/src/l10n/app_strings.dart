@@ -35,6 +35,7 @@ class AppStrings {
       isGerman ? 'Schutzstatus' : 'Protection status';
   String get localOnly =>
       isGerman ? 'Lokal, kein Backend' : 'Local, no backend';
+  String get noBackend => isGerman ? 'Kein Backend' : 'No backend';
   String get torLimitsTitle =>
       isGerman ? 'Tor ist kein klassischer VPN' : 'Tor is not a classic VPN';
   String get torLimitsBody => isGerman

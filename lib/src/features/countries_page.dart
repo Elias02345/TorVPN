@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../core/mock_core_client.dart';
+import '../core/core_client.dart';
 import '../l10n/app_strings.dart';
 import '../theme/app_theme.dart';
 import 'shared.dart';
@@ -8,7 +8,7 @@ import 'shared.dart';
 class CountriesPage extends StatelessWidget {
   const CountriesPage({required this.core, required this.strings, super.key});
 
-  final MockCoreClient core;
+  final CoreClient core;
   final AppStrings strings;
 
   @override
@@ -16,9 +16,28 @@ class CountriesPage extends StatelessWidget {
     return PageFrame(
       title: strings.countries,
       subtitle: strings.isGerman
-          ? 'Bevorzuge Exit-Länder, ohne Tor-Verbindungen hart zu erzwingen.'
-          : 'Prefer exit countries without forcing fragile Tor routes.',
+          ? 'Exit-Laender sind Praeferenzen, keine Standort-Garantien.'
+          : 'Exit countries are preferences, not location guarantees.',
       children: [
+        Panel(
+          color: AppColors.surfaceWarm,
+          borderColor: AppColors.warn.withValues(alpha: 0.36),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Icon(Icons.info_rounded, color: AppColors.warn),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  strings.isGerman
+                      ? 'Tor kann Exit-Wuensche ignorieren, wenn Stabilitaet oder Verfuegbarkeit es erfordern. Die App zeigt Fallbacks sichtbar an.'
+                      : 'Tor can ignore exit preferences when stability or availability requires it. The app keeps fallback visible.',
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 14),
         InfoCard(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,

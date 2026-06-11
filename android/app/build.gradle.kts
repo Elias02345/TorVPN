@@ -26,9 +26,9 @@ android {
 
     buildTypes {
         release {
-            // Development only. Stable releases must use CI/offline signing keys
-            // and satisfy docs/audit/STABLE_BLOCKERS.md before publication.
-            signingConfig = signingConfigs.getByName("debug")
+            // Intentionally unsigned in local builds. Stable releases must use
+            // CI/offline signing keys and satisfy docs/audit/STABLE_BLOCKERS.md.
+            signingConfig = null
         }
     }
 }

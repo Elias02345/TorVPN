@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../core/core_models.dart';
-import '../core/mock_core_client.dart';
+import '../core/core_client.dart';
 import '../l10n/app_strings.dart';
 import '../theme/app_theme.dart';
 import 'shared.dart';
@@ -13,7 +13,7 @@ class AppExceptionsPage extends StatelessWidget {
     super.key,
   });
 
-  final MockCoreClient core;
+  final CoreClient core;
   final AppStrings strings;
 
   @override
@@ -21,7 +21,7 @@ class AppExceptionsPage extends StatelessWidget {
     return PageFrame(
       title: strings.appExceptions,
       subtitle: strings.isGerman
-          ? 'Ausnahmen sind manuell, sichtbar und reduzieren den Schutz der betroffenen Apps.'
+          ? 'Ausnahmen sind manuell, sichtbar und in Strict Mode gesperrt.'
           : 'Exceptions are manual, visible, and reduce protection for affected apps.',
       children: [
         InfoCard(

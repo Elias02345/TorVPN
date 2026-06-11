@@ -22,6 +22,8 @@ pub enum CoreError {
     NotConnected,
     #[error("app exceptions are not allowed in strict mode")]
     StrictModeRejectsAppExceptions,
+    #[error("connection input is unsafe: {0}")]
+    UnsafeConnectionInput(String),
 }
 
 #[derive(Debug)]
@@ -52,6 +54,7 @@ impl TorTunnelCore {
         if request.profile.exit_countries.is_empty() {
             return Err(CoreError::EmptyCountryProfile);
         }
+        validate_connection_request(&request)?;
         if request.mode == ConnectionMode::Strict
             && request.app_exceptions.iter().any(|app| app.enabled)
         {
@@ -65,10 +68,10 @@ impl TorTunnelCore {
                 exit_country: None,
                 exit_ip: None,
                 bootstrap_percent: 0,
-                kill_switch_active: true,
-                dns_protected: true,
-                udp_blocked: true,
-                ipv6_blocked: true,
+                kill_switch_active: false,
+                dns_protected: false,
+                udp_blocked: false,
+                ipv6_blocked: false,
                 fallback_active: false,
                 message: "Strict Mode rejects app exceptions. Switch to Compatibility Mode for reduced protection.".to_string(),
                 release_blockers: vec!["App exceptions cannot be enabled in Strict Mode.".to_string()],
@@ -107,6 +110,29 @@ impl TorTunnelCore {
         self.bridge_config = request.bridge_config.clone();
 
         let capabilities = capabilities(request.platform);
+        if !contract.production_ready {
+            self.status = ConnectionStatus {
+                state: ConnectionState::BlockedByKillswitch,
+                health: TunnelHealth::BlockedByKillSwitch,
+                mode: request.mode,
+                platform: Some(request.platform),
+                profile: Some(request.profile),
+                bridge_config: request.bridge_config,
+                exit_country: None,
+                exit_ip: None,
+                bootstrap_percent: 0,
+                kill_switch_active: false,
+                dns_protected: false,
+                udp_blocked: false,
+                ipv6_blocked: false,
+                fallback_active: false,
+                message: "Connect is locked until native adapter evidence, leak tests, and release audit pass.".to_string(),
+                release_blockers: capabilities.blockers,
+                updated_at_unix: now_unix(),
+            };
+            return Err(CoreError::UnsupportedPlatform);
+        }
+
         let strict_protected = contract.production_ready && request.mode == ConnectionMode::Strict;
         self.status = ConnectionStatus {
             state: if contract.production_ready {
@@ -221,9 +247,7 @@ impl TorTunnelCore {
     pub fn verify_exit(&mut self) -> Result<ExitVerification, CoreError> {
         if !matches!(
             self.status.state,
-            ConnectionState::Connected
-                | ConnectionState::Degraded
-                | ConnectionState::FallbackActive
+            ConnectionState::Connected | ConnectionState::FallbackActive
         ) {
             return Err(CoreError::NotConnected);
         }
@@ -259,7 +283,7 @@ impl TorTunnelCore {
                     &RedactionPolicy::default(),
                 ),
             ],
-            tor_config_preview: self.last_tor_config.as_ref().map(TorConfig::to_torrc),
+            tor_config_preview: None,
             release_blockers: self.status.release_blockers.clone(),
         }
     }
@@ -284,6 +308,102 @@ impl TorTunnelCore {
         }
     }
 
+    pub fn release_readiness(&self) -> ReleaseReadiness {
+        let platform_readiness = [Platform::Android, Platform::Linux, Platform::Windows]
+            .into_iter()
+            .map(|platform| {
+                let capability = capabilities(platform);
+                PlatformReadiness {
+                    platform,
+                    adapter_name: capability.adapter_name,
+                    status: if capability.production_ready {
+                        ReadinessStatus::Verified
+                    } else {
+                        ReadinessStatus::NotReady
+                    },
+                    evidence_id: format!("adapter.{platform:?}").to_lowercase(),
+                    message: if capability.production_ready {
+                        "Adapter capability reports production-ready.".to_string()
+                    } else {
+                        capability.blockers.join(" ")
+                    },
+                }
+            })
+            .collect();
+
+        ReleaseReadiness {
+            platform_readiness,
+            steps: vec![
+                ReadinessStep {
+                    id: "native-adapter".to_string(),
+                    title: "Native adapter".to_string(),
+                    status: ReadinessStatus::NotReady,
+                    evidence_id: "gate.native-adapter".to_string(),
+                    detail: "No platform adapter can claim real protection yet.".to_string(),
+                },
+                ReadinessStep {
+                    id: "leak-tests".to_string(),
+                    title: "Leak tests".to_string(),
+                    status: ReadinessStatus::NotReady,
+                    evidence_id: "gate.leak-tests".to_string(),
+                    detail: "Exit IP, DNS, UDP, IPv6, and kill-switch tests must pass.".to_string(),
+                },
+                ReadinessStep {
+                    id: "release-audit".to_string(),
+                    title: "Release audit".to_string(),
+                    status: ReadinessStatus::NotReady,
+                    evidence_id: "gate.release-audit".to_string(),
+                    detail: "Signing, packaging, and external audit are still open.".to_string(),
+                },
+            ],
+            evidence: vec![
+                LeakEvidenceItem {
+                    id: "leak.exit-ip".to_string(),
+                    area: "Exit IP".to_string(),
+                    status: EvidenceStatus::Blocked,
+                    evidence_id: "docs/LEAK_TEST_MATRIX.md#exit-ip".to_string(),
+                    message: "Public IP must be a Tor exit after connect.".to_string(),
+                },
+                LeakEvidenceItem {
+                    id: "leak.dns".to_string(),
+                    area: "DNS".to_string(),
+                    status: EvidenceStatus::Blocked,
+                    evidence_id: "docs/LEAK_TEST_MATRIX.md#dns".to_string(),
+                    message: "System resolver bypass is not device-verified.".to_string(),
+                },
+                LeakEvidenceItem {
+                    id: "leak.kill-switch".to_string(),
+                    area: "Kill-switch".to_string(),
+                    status: EvidenceStatus::Blocked,
+                    evidence_id: "docs/LEAK_TEST_MATRIX.md#kill-switch".to_string(),
+                    message: "Traffic must stay blocked during Tor failure.".to_string(),
+                },
+                LeakEvidenceItem {
+                    id: "leak.diagnostics".to_string(),
+                    area: "Diagnostics".to_string(),
+                    status: EvidenceStatus::LocalOnly,
+                    evidence_id: "docs/THREAT_MODEL.md#goals".to_string(),
+                    message: "Diagnostics remain local and manually exported.".to_string(),
+                },
+            ],
+            claims: vec![
+                ProtectionClaim {
+                    label: "No accounts".to_string(),
+                    status: EvidenceStatus::LocalOnly,
+                    evidence_id: "README.md#important-status".to_string(),
+                    message: "No backend account system is present.".to_string(),
+                },
+                ProtectionClaim {
+                    label: "Strict Mode protection".to_string(),
+                    status: EvidenceStatus::Blocked,
+                    evidence_id: "docs/audit/STABLE_BLOCKERS.md".to_string(),
+                    message: "Strict Mode cannot claim protected until native adapters pass."
+                        .to_string(),
+                },
+            ],
+        }
+    }
+
     pub fn status(&self) -> ConnectionStatus {
         self.status.clone()
     }
@@ -294,6 +414,67 @@ fn now_unix() -> u64 {
         .duration_since(UNIX_EPOCH)
         .unwrap_or_default()
         .as_secs()
+}
+
+fn validate_connection_request(request: &ConnectionRequest) -> Result<(), CoreError> {
+    for country in &request.profile.exit_countries {
+        if country.len() != 2 || !country.chars().all(|ch| ch.is_ascii_alphabetic()) {
+            return Err(CoreError::UnsafeConnectionInput(format!(
+                "invalid exit country {country}"
+            )));
+        }
+    }
+    validate_bridge_config(&request.bridge_config)
+}
+
+fn validate_bridge_config(bridge_config: &BridgeConfig) -> Result<(), CoreError> {
+    match bridge_config {
+        BridgeConfig::None | BridgeConfig::Snowflake => Ok(()),
+        BridgeConfig::ManualObfs4 { lines } => {
+            for line in lines {
+                reject_control_chars(line, "manual bridge line")?;
+                if !line.starts_with("obfs4 ") {
+                    return Err(CoreError::UnsafeConnectionInput(
+                        "manual bridge lines must start with obfs4".to_string(),
+                    ));
+                }
+            }
+            Ok(())
+        }
+        BridgeConfig::CustomTransport {
+            name,
+            command,
+            args,
+        } => {
+            reject_token(name, "custom transport name")?;
+            reject_token(command, "custom transport command")?;
+            for arg in args {
+                reject_control_chars(arg, "custom transport argument")?;
+            }
+            Ok(())
+        }
+    }
+}
+
+fn reject_token(value: &str, label: &str) -> Result<(), CoreError> {
+    reject_control_chars(value, label)?;
+    if value.is_empty()
+        || !value
+            .chars()
+            .all(|ch| ch.is_ascii_alphanumeric() || matches!(ch, '_' | '-' | '.' | '/'))
+    {
+        return Err(CoreError::UnsafeConnectionInput(format!("invalid {label}")));
+    }
+    Ok(())
+}
+
+fn reject_control_chars(value: &str, label: &str) -> Result<(), CoreError> {
+    if value.contains('\n') || value.contains('\r') || value.contains('\0') {
+        return Err(CoreError::UnsafeConnectionInput(format!(
+            "{label} contains control characters"
+        )));
+    }
+    Ok(())
 }
 
 #[cfg(test)]
@@ -347,8 +528,8 @@ mod tests {
 
         assert!(status.kill_switch_active);
         assert!(status.dns_protected);
-        assert!(status.udp_blocked);
-        assert!(status.ipv6_blocked);
+        assert!(!status.udp_blocked);
+        assert!(!status.ipv6_blocked);
     }
 
     #[test]
@@ -399,6 +580,76 @@ mod tests {
     }
 
     #[test]
+    fn connect_rejects_multiline_exit_country() {
+        let mut core = TorTunnelCore::new();
+        let result = core.connect(ConnectionRequest {
+            platform: Platform::Android,
+            mode: ConnectionMode::Strict,
+            profile: CountryProfile {
+                exit_countries: vec!["DE\nSocksPort 0".to_string()],
+                ..profile()
+            },
+            bridge_config: BridgeConfig::None,
+            app_exceptions: Vec::new(),
+            auto_fallback: true,
+            isolate_by_app: true,
+        });
+
+        assert!(matches!(result, Err(CoreError::UnsafeConnectionInput(_))));
+    }
+
+    #[test]
+    fn connect_rejects_multiline_bridge_config() {
+        let mut core = TorTunnelCore::new();
+        let result = core.connect(ConnectionRequest {
+            platform: Platform::Android,
+            mode: ConnectionMode::Strict,
+            profile: profile(),
+            bridge_config: BridgeConfig::ManualObfs4 {
+                lines: vec![
+                    "obfs4 203.0.113.10:443 cert=fingerprint iat-mode=0\nSocksPort 0".to_string(),
+                ],
+            },
+            app_exceptions: Vec::new(),
+            auto_fallback: true,
+            isolate_by_app: true,
+        });
+
+        assert!(matches!(result, Err(CoreError::UnsafeConnectionInput(_))));
+    }
+
+    #[test]
+    fn non_production_adapter_connect_fails_closed() {
+        let mut core = TorTunnelCore::new();
+        let result = core.connect(ConnectionRequest {
+            platform: Platform::Android,
+            mode: ConnectionMode::CompatibilityReducedProtection,
+            profile: profile(),
+            bridge_config: BridgeConfig::None,
+            app_exceptions: Vec::new(),
+            auto_fallback: true,
+            isolate_by_app: true,
+        });
+
+        assert!(matches!(result, Err(CoreError::UnsupportedPlatform)));
+        let status = core.status();
+        assert_eq!(status.state, ConnectionState::BlockedByKillswitch);
+        assert_eq!(status.exit_ip, None);
+        assert!(!status.kill_switch_active);
+        assert!(!status.dns_protected);
+        assert!(!status.udp_blocked);
+        assert!(!status.ipv6_blocked);
+    }
+
+    #[test]
+    fn diagnostics_omit_torrc_preview_by_default() {
+        let core = TorTunnelCore::new();
+        let diagnostics = core.export_diagnostics();
+
+        assert_eq!(diagnostics.tor_config_preview, None);
+    }
+
+    #[test]
     fn leak_self_test_blocks_until_native_adapter_is_ready() {
         let core = TorTunnelCore::new();
         let report = core.run_leak_self_test();
@@ -407,5 +658,19 @@ mod tests {
             .results
             .iter()
             .all(|result| result.status == LeakCheckStatus::Blocked));
+    }
+
+    #[test]
+    fn release_readiness_keeps_strict_claim_blocked_without_adapter_evidence() {
+        let core = TorTunnelCore::new();
+        let readiness = core.release_readiness();
+
+        assert!(readiness
+            .platform_readiness
+            .iter()
+            .all(|platform| platform.status == ReadinessStatus::NotReady));
+        assert!(readiness.claims.iter().any(|claim| {
+            claim.label == "Strict Mode protection" && claim.status == EvidenceStatus::Blocked
+        }));
     }
 }

@@ -1,103 +1,59 @@
-import 'package:flutter/foundation.dart';
-
+import 'core_client.dart';
 import 'core_models.dart';
+import 'core_seed_data.dart';
 
-class MockCoreClient extends ChangeNotifier {
+class MockCoreClient extends CoreClient {
   MockCoreClient();
 
-  final List<CountryProfile> profiles = const [
-    CountryProfile(
-      id: 'eu-privacy',
-      name: 'EU Privacy',
-      exitCountries: ['DE', 'NL', 'SE'],
-      description: 'Stable European exits with transparent fallback.',
-    ),
-    CountryProfile(
-      id: 'north-atlantic',
-      name: 'North Atlantic',
-      exitCountries: ['US', 'CA', 'NL'],
-      description: 'Good for broad compatibility with Tor exits.',
-    ),
-    CountryProfile(
-      id: 'minimal-de',
-      name: 'Germany Preferred',
-      exitCountries: ['DE'],
-      description: 'Single-country preference; may degrade more often.',
-    ),
-  ];
+  @override
+  final List<CountryProfile> profiles = seedProfiles;
 
-  final List<RelayCountryStatus> relayCountries = const [
-    RelayCountryStatus(
-      countryCode: 'DE',
-      countryName: 'Germany',
-      exitRelays: 168,
-      available: true,
-      stabilityScore: 94,
-    ),
-    RelayCountryStatus(
-      countryCode: 'NL',
-      countryName: 'Netherlands',
-      exitRelays: 221,
-      available: true,
-      stabilityScore: 97,
-    ),
-    RelayCountryStatus(
-      countryCode: 'SE',
-      countryName: 'Sweden',
-      exitRelays: 72,
-      available: true,
-      stabilityScore: 88,
-    ),
-    RelayCountryStatus(
-      countryCode: 'IS',
-      countryName: 'Iceland',
-      exitRelays: 0,
-      available: false,
-      stabilityScore: 0,
-    ),
-  ];
+  @override
+  final List<RelayCountryStatus> relayCountries = seedRelayCountries;
 
-  CountryProfile selectedProfile = const CountryProfile(
-    id: 'eu-privacy',
-    name: 'EU Privacy',
-    exitCountries: ['DE', 'NL', 'SE'],
-    description: 'Stable European exits with transparent fallback.',
-  );
+  @override
+  CountryProfile selectedProfile = seedProfiles.first;
 
+  @override
   ConnectionMode connectionMode = ConnectionMode.strict;
+
+  @override
   BridgeConfig bridgeConfig = const BridgeConfig(
     kind: BridgeKind.none,
     label: 'No bridges',
   );
+
+  @override
   ConnectionStatus status = ConnectionStatus.disconnected();
+
+  @override
+  ReleaseReadiness releaseReadiness = defaultReleaseReadiness;
+
+  @override
+  List<ProtectionClaim> protectionClaims = defaultProtectionClaims;
+
+  @override
   ExitVerification? lastVerification;
+
+  @override
   LeakSelfTestReport? lastLeakSelfTest;
+
+  @override
   bool autoConnect = false;
+
+  @override
   bool autoRotation = false;
+
+  @override
   bool localVerboseDiagnostics = false;
+
+  @override
   bool onboardingDismissed = false;
 
-  List<AppException> appExceptions = const [
-    AppException(
-      appId: 'com.bank.mobile',
-      displayName: 'Banking',
-      enabled: false,
-      reason: 'Some banking apps reject Tor exits.',
-    ),
-    AppException(
-      appId: 'com.video.calls',
-      displayName: 'Video Calls',
-      enabled: false,
-      reason: 'Realtime UDP traffic is blocked by TorTunnel MVP policy.',
-    ),
-    AppException(
-      appId: 'org.package.manager',
-      displayName: 'Package Manager',
-      enabled: false,
-      reason: 'Allowed outside tunnel during alpha for signed system updates.',
-    ),
-  ];
+  @override
+  List<AppException> appExceptions = seedAppExceptions;
 
+  @override
   Future<void> connect() async {
     final enabledExceptions = appExceptions
         .where((exception) => exception.enabled)
@@ -112,9 +68,9 @@ class MockCoreClient extends ChangeNotifier {
         bridgeConfig: bridgeConfig,
         bootstrapPercent: 0,
         killSwitchActive: true,
-        dnsProtected: true,
-        udpBlocked: true,
-        ipv6Blocked: true,
+        dnsProtected: false,
+        udpBlocked: false,
+        ipv6Blocked: false,
         fallbackActive: false,
         message:
             'Strict Mode blocks app exceptions. Disable exceptions or switch to Compatibility Mode.',
@@ -127,70 +83,36 @@ class MockCoreClient extends ChangeNotifier {
     }
 
     status = ConnectionStatus(
-      state: ConnectionStateKind.connecting,
+      state: ConnectionStateKind.blockedByKillswitch,
       mode: connectionMode,
-      health: TunnelHealth.reconnecting,
+      health: TunnelHealth.blockedByKillSwitch,
       profile: selectedProfile,
       bridgeConfig: bridgeConfig,
-      bootstrapPercent: 18,
+      bootstrapPercent: 0,
       killSwitchActive: true,
-      dnsProtected: true,
-      udpBlocked: true,
-      ipv6Blocked: true,
+      dnsProtected: false,
+      udpBlocked: false,
+      ipv6Blocked: false,
       fallbackActive: false,
-      message: 'Starting Tor daemon and applying kill-switch policy.',
-      releaseBlockers: const [
-        'Native tunnel adapters are not production-ready.',
-        'External audit is not complete.',
-      ],
-    );
-    notifyListeners();
-    await Future<void>.delayed(const Duration(milliseconds: 450));
-
-    status = status.copyWith(
-      state: ConnectionStateKind.bootstrappingTor,
-      bootstrapPercent: 72,
-      message: 'Bootstrapping Tor circuits and resolving exit preferences.',
-    );
-    notifyListeners();
-    await Future<void>.delayed(const Duration(milliseconds: 450));
-
-    status = status.copyWith(
-      state: connectionMode == ConnectionMode.strict
-          ? ConnectionStateKind.blockedByKillswitch
-          : ConnectionStateKind.degraded,
-      health: connectionMode == ConnectionMode.strict
-          ? TunnelHealth.blockedByKillSwitch
-          : TunnelHealth.reducedProtection,
-      bootstrapPercent: 100,
-      exitCountry: selectedProfile.exitCountries.first,
-      exitIp: '185.220.101.42',
-      message: connectionMode == ConnectionMode.strict
-          ? 'Strict Mode is blocked until native adapters are production-ready.'
-          : 'Compatibility Mode development core active. Protection is reduced and not stable-ready.',
-      releaseBlockers: const [
-        'Android/Linux/Windows native adapters must pass leak tests.',
-        'Tor, obfs4proxy and Snowflake reproducible bundles are not wired.',
-        'External audit is not complete.',
-      ],
-    );
-    lastVerification = const ExitVerification(
-      isTor: true,
-      observedIp: '185.220.101.42',
-      observedCountry: 'DE',
-      source: 'mock-public-check',
       message:
-          'Public exit verification contract is ready; network call is mocked.',
+          'Connect is locked until native adapters, leak tests, and release audit evidence pass.',
+      releaseBlockers: const [
+        'Android/Linux/Windows native adapters are not verified.',
+        'Leak-test matrix has not passed on target devices and VMs.',
+        'External audit is not complete.',
+      ],
     );
     notifyListeners();
   }
 
+  @override
   void disconnect() {
     status = ConnectionStatus.disconnected();
     lastVerification = null;
     notifyListeners();
   }
 
+  @override
   Future<void> rotateIdentity() async {
     if (!status.isActive) {
       return;
@@ -215,6 +137,7 @@ class MockCoreClient extends ChangeNotifier {
     notifyListeners();
   }
 
+  @override
   void setSelectedProfile(CountryProfile profile) {
     selectedProfile = profile;
     if (status.isActive) {
@@ -229,6 +152,7 @@ class MockCoreClient extends ChangeNotifier {
     notifyListeners();
   }
 
+  @override
   void setConnectionMode(ConnectionMode mode) {
     connectionMode = mode;
     if (mode == ConnectionMode.strict) {
@@ -253,6 +177,7 @@ class MockCoreClient extends ChangeNotifier {
     notifyListeners();
   }
 
+  @override
   void setBridgeConfig(BridgeConfig value) {
     bridgeConfig = value;
     status = status.copyWith(
@@ -262,26 +187,31 @@ class MockCoreClient extends ChangeNotifier {
     notifyListeners();
   }
 
+  @override
   void setAutoConnect(bool value) {
     autoConnect = value;
     notifyListeners();
   }
 
+  @override
   void setAutoRotation(bool value) {
     autoRotation = value;
     notifyListeners();
   }
 
+  @override
   void setVerboseDiagnostics(bool value) {
     localVerboseDiagnostics = value;
     notifyListeners();
   }
 
+  @override
   void dismissOnboarding() {
     onboardingDismissed = true;
     notifyListeners();
   }
 
+  @override
   void toggleAppException(String appId, bool enabled) {
     if (connectionMode == ConnectionMode.strict && enabled) {
       status = status.copyWith(
@@ -302,6 +232,7 @@ class MockCoreClient extends ChangeNotifier {
     notifyListeners();
   }
 
+  @override
   ExitVerification verifyExit() {
     lastVerification = ExitVerification(
       isTor: status.isActive,
@@ -310,12 +241,13 @@ class MockCoreClient extends ChangeNotifier {
       source: 'mock-public-check',
       message: status.isActive
           ? 'Tor exit verified through the public-check contract.'
-          : 'Not connected; no Tor exit can be verified.',
+          : 'Setup is not ready; no Tor exit can be verified.',
     );
     notifyListeners();
     return lastVerification!;
   }
 
+  @override
   String exportDiagnostics() {
     final exceptions = appExceptions
         .where((exception) => exception.enabled)
@@ -336,9 +268,12 @@ class MockCoreClient extends ChangeNotifier {
       'Enabled app exceptions: ${exceptions.isEmpty ? 'none' : exceptions}',
       'Telemetry: none',
       'Upload: manual only',
+      'Connect locked: ${!releaseReadiness.canAttemptRealConnection}',
+      'Evidence gate: docs/LEAK_TEST_MATRIX.md',
     ].join('\n');
   }
 
+  @override
   LeakSelfTestReport runLeakSelfTest() {
     lastLeakSelfTest = const LeakSelfTestReport(
       strictMode: true,

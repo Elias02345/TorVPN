@@ -3,31 +3,34 @@ import 'package:tortunnel/src/core/core_models.dart';
 import 'package:tortunnel/src/core/mock_core_client.dart';
 
 void main() {
+  test('strict connect stays locked until release evidence passes', () async {
+    final core = MockCoreClient();
+
+    await core.connect();
+
+    expect(core.status.state, ConnectionStateKind.blockedByKillswitch);
+    expect(core.status.health, TunnelHealth.blockedByKillSwitch);
+    expect(core.status.killSwitchActive, isTrue);
+    expect(core.status.dnsProtected, isFalse);
+    expect(core.status.udpBlocked, isFalse);
+    expect(core.status.ipv6Blocked, isFalse);
+    expect(core.status.message, contains('Connect is locked'));
+    expect(core.releaseReadiness.canAttemptRealConnection, isFalse);
+  });
+
   test(
-    'strict connect enables leak-protection flags and blocks unsafe scaffold',
+    'compatibility mode still cannot bypass release evidence gates',
     () async {
-      final core = MockCoreClient();
+      final core = MockCoreClient()
+        ..setConnectionMode(ConnectionMode.compatibilityReducedProtection);
 
       await core.connect();
 
       expect(core.status.state, ConnectionStateKind.blockedByKillswitch);
       expect(core.status.health, TunnelHealth.blockedByKillSwitch);
-      expect(core.status.killSwitchActive, isTrue);
-      expect(core.status.dnsProtected, isTrue);
-      expect(core.status.udpBlocked, isTrue);
-      expect(core.status.ipv6Blocked, isTrue);
+      expect(core.status.message, contains('Connect is locked'));
     },
   );
-
-  test('compatibility mode is reduced protection', () async {
-    final core = MockCoreClient()
-      ..setConnectionMode(ConnectionMode.compatibilityReducedProtection);
-
-    await core.connect();
-
-    expect(core.status.state, ConnectionStateKind.degraded);
-    expect(core.status.health, TunnelHealth.reducedProtection);
-  });
 
   test('strict mode prevents enabling app exceptions', () {
     final core = MockCoreClient();

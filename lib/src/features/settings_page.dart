@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../core/core_models.dart';
-import '../core/mock_core_client.dart';
+import '../core/core_client.dart';
 import '../l10n/app_strings.dart';
 import '../theme/app_theme.dart';
 import 'shared.dart';
@@ -15,7 +15,7 @@ class SettingsPage extends StatelessWidget {
     super.key,
   });
 
-  final MockCoreClient core;
+  final CoreClient core;
   final AppStrings strings;
   final LanguageChoice language;
   final ValueChanged<LanguageChoice> onLanguageChanged;
@@ -28,42 +28,79 @@ class SettingsPage extends StatelessWidget {
           ? 'Privacy-Defaults, Sprache und lokale Diagnose.'
           : 'Privacy defaults, language, and local diagnostics.',
       children: [
+        Panel(
+          color: AppColors.surfaceWarm,
+          borderColor: AppColors.warn.withValues(alpha: 0.38),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SectionHeader(
+                icon: Icons.lock_clock_rounded,
+                title: strings.isGerman
+                    ? 'Stable-Release gesperrt'
+                    : 'Stable release locked',
+                subtitle: strings.isGerman
+                    ? 'Der Release-Gate bleibt zu, bis Adapter, Leak-Matrix und Audit bestanden sind.'
+                    : 'The release gate stays closed until adapters, leak matrix, and audit pass.',
+              ),
+              const SizedBox(height: 14),
+              ReadinessSteps(steps: core.releaseReadiness.steps),
+            ],
+          ),
+        ),
+        const SizedBox(height: 14),
         InfoCard(
           child: Column(
             children: [
-              ListTile(
-                contentPadding: EdgeInsets.zero,
-                leading: const Icon(
-                  Icons.policy_rounded,
-                  color: AppColors.cyan,
-                ),
-                title: Text(strings.mode),
-                subtitle: Text(
-                  core.connectionMode == ConnectionMode.strict
-                      ? (strings.isGerman
-                            ? 'Keine App-Ausnahmen, kein direkter Fallback, UDP/IPv6 blockiert.'
-                            : 'No app exceptions, no direct fallback, UDP/IPv6 blocked.')
-                      : (strings.isGerman
-                            ? 'App-Ausnahmen erlaubt, aber nur mit reduziertem Schutz.'
-                            : 'App exceptions allowed, but only with reduced protection.'),
-                ),
-                trailing: SegmentedButton<ConnectionMode>(
-                  segments: [
-                    ButtonSegment(
-                      value: ConnectionMode.strict,
-                      icon: const Icon(Icons.shield_rounded),
-                      label: Text(strings.strictMode),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Icon(Icons.policy_rounded, color: AppColors.cyan),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          strings.mode,
+                          style: Theme.of(context).textTheme.titleMedium,
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          core.connectionMode == ConnectionMode.strict
+                              ? (strings.isGerman
+                                    ? 'Keine App-Ausnahmen, kein direkter Fallback, UDP/IPv6 blockiert.'
+                                    : 'No app exceptions, no direct fallback, UDP/IPv6 blocked.')
+                              : (strings.isGerman
+                                    ? 'App-Ausnahmen erlaubt, aber nur mit reduziertem Schutz.'
+                                    : 'App exceptions allowed, but only with reduced protection.'),
+                        ),
+                        const SizedBox(height: 12),
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: SegmentedButton<ConnectionMode>(
+                            segments: [
+                              ButtonSegment(
+                                value: ConnectionMode.strict,
+                                icon: const Icon(Icons.shield_rounded),
+                                label: Text(strings.strictMode),
+                              ),
+                              ButtonSegment(
+                                value: ConnectionMode
+                                    .compatibilityReducedProtection,
+                                icon: const Icon(Icons.warning_rounded),
+                                label: Text(strings.compatibilityMode),
+                              ),
+                            ],
+                            selected: {core.connectionMode},
+                            onSelectionChanged: (selection) =>
+                                core.setConnectionMode(selection.first),
+                          ),
+                        ),
+                      ],
                     ),
-                    ButtonSegment(
-                      value: ConnectionMode.compatibilityReducedProtection,
-                      icon: const Icon(Icons.warning_rounded),
-                      label: Text(strings.compatibilityMode),
-                    ),
-                  ],
-                  selected: {core.connectionMode},
-                  onSelectionChanged: (selection) =>
-                      core.setConnectionMode(selection.first),
-                ),
+                  ),
+                ],
               ),
               const Divider(color: AppColors.border),
               SwitchListTile(

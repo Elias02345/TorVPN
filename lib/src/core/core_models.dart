@@ -4,6 +4,10 @@ enum PlatformTarget { android, linux, windows }
 
 enum ConnectionMode { strict, compatibilityReducedProtection }
 
+enum ReadinessStatus { verified, pending, notReady }
+
+enum EvidenceStatus { verified, pending, blocked, localOnly }
+
 enum TunnelHealth {
   protected,
   reconnecting,
@@ -91,6 +95,89 @@ class BridgeConfig {
   final List<String> lines;
 }
 
+class PlatformReadiness {
+  const PlatformReadiness({
+    required this.target,
+    required this.adapterName,
+    required this.status,
+    required this.evidenceId,
+    required this.message,
+  });
+
+  final PlatformTarget target;
+  final String adapterName;
+  final ReadinessStatus status;
+  final String evidenceId;
+  final String message;
+}
+
+class ReadinessStep {
+  const ReadinessStep({
+    required this.id,
+    required this.title,
+    required this.status,
+    required this.evidenceId,
+    required this.detail,
+  });
+
+  final String id;
+  final String title;
+  final ReadinessStatus status;
+  final String evidenceId;
+  final String detail;
+}
+
+class LeakEvidenceItem {
+  const LeakEvidenceItem({
+    required this.id,
+    required this.area,
+    required this.status,
+    required this.evidenceId,
+    required this.message,
+  });
+
+  final String id;
+  final String area;
+  final EvidenceStatus status;
+  final String evidenceId;
+  final String message;
+}
+
+class ProtectionClaim {
+  const ProtectionClaim({
+    required this.label,
+    required this.status,
+    required this.evidenceId,
+    required this.message,
+  });
+
+  final String label;
+  final EvidenceStatus status;
+  final String evidenceId;
+  final String message;
+}
+
+class ReleaseReadiness {
+  const ReleaseReadiness({
+    required this.platformReadiness,
+    required this.steps,
+    required this.evidence,
+  });
+
+  final List<PlatformReadiness> platformReadiness;
+  final List<ReadinessStep> steps;
+  final List<LeakEvidenceItem> evidence;
+
+  bool get canAttemptRealConnection =>
+      platformReadiness.every(
+        (item) => item.status == ReadinessStatus.verified,
+      ) &&
+      steps.every((item) => item.status == ReadinessStatus.verified);
+
+  int get verifiedStepCount =>
+      steps.where((item) => item.status == ReadinessStatus.verified).length;
+}
+
 class ConnectionStatus {
   const ConnectionStatus({
     required this.state,
@@ -118,8 +205,8 @@ class ConnectionStatus {
       bootstrapPercent: 0,
       killSwitchActive: false,
       dnsProtected: false,
-      udpBlocked: true,
-      ipv6Blocked: true,
+      udpBlocked: false,
+      ipv6Blocked: false,
       fallbackActive: false,
       message: 'Disconnected',
       releaseBlockers: [],

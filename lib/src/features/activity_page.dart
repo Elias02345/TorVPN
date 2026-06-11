@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../core/mock_core_client.dart';
+import '../core/core_client.dart';
 import '../l10n/app_strings.dart';
 import '../theme/app_theme.dart';
 import 'shared.dart';
@@ -8,165 +8,216 @@ import 'shared.dart';
 class ActivityPage extends StatelessWidget {
   const ActivityPage({required this.core, required this.strings, super.key});
 
-  final MockCoreClient core;
+  final CoreClient core;
   final AppStrings strings;
 
   @override
   Widget build(BuildContext context) {
-    final verification = core.lastVerification;
     return PageFrame(
-      title: strings.activity,
+      title: strings.isGerman ? 'Evidence' : 'Evidence',
       subtitle: strings.isGerman
-          ? 'Verbindungsdetails bleiben lokal und werden nur manuell exportiert.'
-          : 'Connection details stay local and are exported only manually.',
+          ? 'Pruefbare lokale Belege statt Schutzversprechen.'
+          : 'Local evidence instead of protection promises.',
+      trailing: OutlinedButton.icon(
+        onPressed: core.runLeakSelfTest,
+        icon: const Icon(Icons.science_rounded),
+        label: Text(strings.leakSelfTest),
+      ),
       children: [
         LayoutBuilder(
           builder: (context, constraints) {
-            final columns = constraints.maxWidth >= 860 ? 3 : 1;
-            return GridView.count(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              crossAxisCount: columns,
-              mainAxisSpacing: 10,
-              crossAxisSpacing: 10,
-              childAspectRatio: columns == 3 ? 2.2 : 3.6,
+            final wide = constraints.maxWidth >= 900;
+            final leakMatrix = _LeakMatrixPanel(core: core, strings: strings);
+            final quickChecks = _QuickChecksPanel(core: core, strings: strings);
+            if (!wide) {
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [leakMatrix, const SizedBox(height: 14), quickChecks],
+              );
+            }
+            return Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                MetricTile(
-                  icon: Icons.flag_rounded,
-                  label: strings.isGerman
-                      ? 'Beobachtetes Exit-Land'
-                      : 'Observed exit country',
-                  value: core.status.exitCountry ?? 'none',
-                  color: AppColors.cyan,
-                ),
-                MetricTile(
-                  icon: Icons.lan_rounded,
-                  label: strings.isGerman
-                      ? 'Beobachtete Exit-IP'
-                      : 'Observed exit IP',
-                  value: core.status.exitIp ?? 'none',
-                  color: AppColors.good,
-                ),
-                MetricTile(
-                  icon: Icons.account_tree_rounded,
-                  label: strings.isGerman
-                      ? 'Circuit-Isolation'
-                      : 'Circuit isolation',
-                  value: strings.isGerman ? 'Pro App' : 'Per app',
-                  color: AppColors.warn,
-                ),
+                Expanded(flex: 6, child: leakMatrix),
+                const SizedBox(width: 14),
+                Expanded(flex: 4, child: quickChecks),
               ],
             );
           },
         ),
         const SizedBox(height: 14),
-        InfoCard(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                strings.verifyExit,
-                style: Theme.of(context).textTheme.titleMedium,
-              ),
-              const SizedBox(height: 8),
-              Text(
-                verification == null
-                    ? (strings.isGerman
-                          ? 'Noch keine Exit-Prüfung in dieser Sitzung.'
-                          : 'No exit verification in this session yet.')
-                    : verification.message,
-              ),
-              const SizedBox(height: 14),
-              Wrap(
-                spacing: 10,
-                runSpacing: 10,
-                children: [
-                  OutlinedButton.icon(
-                    onPressed: core.verifyExit,
-                    icon: const Icon(Icons.travel_explore_rounded),
-                    label: Text(strings.verifyExit),
-                  ),
-                  OutlinedButton.icon(
-                    onPressed: core.status.isActive
-                        ? core.rotateIdentity
-                        : null,
-                    icon: const Icon(Icons.refresh_rounded),
-                    label: Text(strings.newIdentity),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
+        _ClaimsPanel(core: core, strings: strings),
         const SizedBox(height: 14),
-        InfoCard(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+        _DiagnosticsPanel(core: core, strings: strings),
+      ],
+    );
+  }
+}
+
+class _LeakMatrixPanel extends StatelessWidget {
+  const _LeakMatrixPanel({required this.core, required this.strings});
+
+  final CoreClient core;
+  final AppStrings strings;
+
+  @override
+  Widget build(BuildContext context) {
+    return Panel(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SectionHeader(
+            icon: Icons.fact_check_rounded,
+            title: strings.isGerman ? 'Leak-Matrix' : 'Leak matrix',
+            subtitle: strings.isGerman
+                ? 'Alles bleibt blockiert oder pending, bis Zielgeraete bestanden sind.'
+                : 'Everything remains blocked or pending until target devices pass.',
+          ),
+          const SizedBox(height: 14),
+          EvidenceTable(items: core.releaseReadiness.evidence),
+        ],
+      ),
+    );
+  }
+}
+
+class _QuickChecksPanel extends StatelessWidget {
+  const _QuickChecksPanel({required this.core, required this.strings});
+
+  final CoreClient core;
+  final AppStrings strings;
+
+  @override
+  Widget build(BuildContext context) {
+    return Panel(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SectionHeader(
+            icon: Icons.bolt_rounded,
+            title: strings.isGerman ? 'Schnellpruefungen' : 'Quick checks',
+            subtitle: strings.isGerman
+                ? 'Diese Aktionen bleiben lokal und manuell.'
+                : 'These actions stay local and manual.',
+          ),
+          const SizedBox(height: 14),
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
             children: [
-              Text(
-                strings.leakSelfTest,
-                style: Theme.of(context).textTheme.titleMedium,
+              OutlinedButton.icon(
+                onPressed: core.verifyExit,
+                icon: const Icon(Icons.travel_explore_rounded),
+                label: Text(strings.verifyExit),
               ),
-              const SizedBox(height: 8),
-              Text(
-                strings.isGerman
-                    ? 'Selbsttests blockieren Stable, bis native Adapter echte Geräte-/VM-Tests bestehen.'
-                    : 'Self-tests block stable until native adapters pass real device/VM checks.',
+              OutlinedButton.icon(
+                onPressed: core.status.isActive ? core.rotateIdentity : null,
+                icon: const Icon(Icons.refresh_rounded),
+                label: Text(strings.newIdentity),
               ),
-              const SizedBox(height: 14),
               OutlinedButton.icon(
                 onPressed: core.runLeakSelfTest,
                 icon: const Icon(Icons.science_rounded),
                 label: Text(strings.leakSelfTest),
               ),
-              if (core.lastLeakSelfTest != null) ...[
-                const SizedBox(height: 14),
-                for (final result in core.lastLeakSelfTest!.results)
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 8),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Icon(
-                          Icons.block_rounded,
-                          color: AppColors.warn,
-                          size: 18,
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            '${result.kind}: ${result.status} - ${result.message}',
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-              ],
             ],
           ),
-        ),
-        const SizedBox(height: 14),
-        InfoCard(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                strings.exportDiagnostics,
-                style: Theme.of(context).textTheme.titleMedium,
-              ),
-              const SizedBox(height: 10),
-              SelectableText(
-                core.exportDiagnostics(),
-                style: const TextStyle(
-                  fontFamily: 'monospace',
-                  color: AppColors.textMuted,
-                  height: 1.45,
+          const SizedBox(height: 16),
+          Text(
+            core.lastVerification == null
+                ? (strings.isGerman
+                      ? 'Noch keine Exit-Pruefung in dieser Sitzung.'
+                      : 'No exit verification in this session yet.')
+                : core.lastVerification!.message,
+            style: Theme.of(context).textTheme.bodyMedium,
+          ),
+          if (core.lastLeakSelfTest != null) ...[
+            const SizedBox(height: 14),
+            for (final result in core.lastLeakSelfTest!.results)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Icon(
+                      Icons.lock_rounded,
+                      color: AppColors.warn,
+                      size: 18,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        '${result.kind}: ${result.status} - ${result.message}',
+                      ),
+                    ),
+                  ],
                 ),
               ),
-            ],
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _ClaimsPanel extends StatelessWidget {
+  const _ClaimsPanel({required this.core, required this.strings});
+
+  final CoreClient core;
+  final AppStrings strings;
+
+  @override
+  Widget build(BuildContext context) {
+    return Panel(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SectionHeader(
+            icon: Icons.policy_rounded,
+            title: strings.isGerman ? 'Claim-Gates' : 'Claim gates',
+            subtitle: strings.isGerman
+                ? 'Jede sichtbare Schutz-Aussage braucht eine Evidence-ID.'
+                : 'Every visible protection claim needs an evidence ID.',
           ),
-        ),
-      ],
+          const SizedBox(height: 14),
+          ClaimList(claims: core.protectionClaims),
+        ],
+      ),
+    );
+  }
+}
+
+class _DiagnosticsPanel extends StatelessWidget {
+  const _DiagnosticsPanel({required this.core, required this.strings});
+
+  final CoreClient core;
+  final AppStrings strings;
+
+  @override
+  Widget build(BuildContext context) {
+    return Panel(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SectionHeader(
+            icon: Icons.file_download_rounded,
+            title: strings.exportDiagnostics,
+            subtitle: strings.isGerman
+                ? 'Kein Upload, kein Konto, keine Telemetrie.'
+                : 'No upload, no account, no telemetry.',
+          ),
+          const SizedBox(height: 12),
+          SelectableText(
+            core.exportDiagnostics(),
+            style: const TextStyle(
+              fontFamily: 'monospace',
+              color: AppColors.textMuted,
+              height: 1.45,
+              fontSize: 12,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

@@ -110,6 +110,14 @@ pub unsafe extern "C" fn tt_core_run_leak_self_test(core: *mut TorTunnelCore) ->
 }
 
 #[no_mangle]
+pub unsafe extern "C" fn tt_core_release_readiness(core: *mut TorTunnelCore) -> *mut c_char {
+    with_core(core, |core| {
+        serde_json::to_string(&FfiEnvelope::ok(core.release_readiness()))
+            .map_err(|err| err.to_string())
+    })
+}
+
+#[no_mangle]
 pub unsafe extern "C" fn tt_core_status(core: *mut TorTunnelCore) -> *mut c_char {
     with_core(core, |core| {
         serde_json::to_string(&FfiEnvelope::ok(core.status())).map_err(|err| err.to_string())

@@ -3,7 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:tortunnel/src/app.dart';
 
 void main() {
-  testWidgets('TorTunnel shell renders locked setup honestly', (tester) async {
+  testWidgets('home keeps locked readiness visible on desktop', (tester) async {
     tester.view.physicalSize = const Size(1200, 900);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
@@ -11,18 +11,21 @@ void main() {
 
     await tester.pumpWidget(const TorTunnelApp());
 
-    expect(find.text('TorTunnel'), findsWidgets);
     expect(find.text('Connect gesperrt'), findsOneWidget);
     expect(find.textContaining('Setup nicht bereit'), findsWidgets);
-    expect(find.byIcon(Icons.power_settings_new_rounded), findsWidgets);
+    expect(find.byIcon(Icons.devices_rounded), findsOneWidget);
+  });
 
-    await tester.ensureVisible(
-      find.byKey(const ValueKey('review-setup-button')),
-    );
-    await tester.tap(find.byKey(const ValueKey('review-setup-button')));
-    await tester.pump();
+  testWidgets('home keeps locked readiness visible on mobile', (tester) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(const TorTunnelApp());
 
     expect(find.text('Connect gesperrt'), findsOneWidget);
     expect(find.textContaining('Setup nicht bereit'), findsWidgets);
+    expect(find.byType(NavigationBar), findsOneWidget);
   });
 }

@@ -38,6 +38,23 @@ pub enum TunnelHealth {
     Error,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "kebab-case")]
+pub enum ReadinessStatus {
+    Verified,
+    Pending,
+    NotReady,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "kebab-case")]
+pub enum EvidenceStatus {
+    Verified,
+    Pending,
+    Blocked,
+    LocalOnly,
+}
+
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct CountryProfile {
     pub id: String,
@@ -99,6 +116,49 @@ pub struct ConnectionStatus {
     pub updated_at_unix: u64,
 }
 
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct PlatformReadiness {
+    pub platform: Platform,
+    pub adapter_name: String,
+    pub status: ReadinessStatus,
+    pub evidence_id: String,
+    pub message: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct ReadinessStep {
+    pub id: String,
+    pub title: String,
+    pub status: ReadinessStatus,
+    pub evidence_id: String,
+    pub detail: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct LeakEvidenceItem {
+    pub id: String,
+    pub area: String,
+    pub status: EvidenceStatus,
+    pub evidence_id: String,
+    pub message: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct ProtectionClaim {
+    pub label: String,
+    pub status: EvidenceStatus,
+    pub evidence_id: String,
+    pub message: String,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct ReleaseReadiness {
+    pub platform_readiness: Vec<PlatformReadiness>,
+    pub steps: Vec<ReadinessStep>,
+    pub evidence: Vec<LeakEvidenceItem>,
+    pub claims: Vec<ProtectionClaim>,
+}
+
 impl ConnectionStatus {
     pub fn disconnected() -> Self {
         Self {
@@ -113,8 +173,8 @@ impl ConnectionStatus {
             bootstrap_percent: 0,
             kill_switch_active: false,
             dns_protected: false,
-            udp_blocked: true,
-            ipv6_blocked: true,
+            udp_blocked: false,
+            ipv6_blocked: false,
             fallback_active: false,
             message: "Disconnected. No traffic is routed through TorTunnel.".to_string(),
             release_blockers: Vec::new(),
@@ -138,9 +198,9 @@ impl ConnectionStatus {
             exit_ip: None,
             bootstrap_percent: 10,
             kill_switch_active: true,
-            dns_protected: true,
-            udp_blocked: true,
-            ipv6_blocked: true,
+            dns_protected: false,
+            udp_blocked: false,
+            ipv6_blocked: false,
             fallback_active: false,
             message: "Starting Tor and enabling leak protection.".to_string(),
             release_blockers: Vec::new(),
@@ -170,9 +230,9 @@ impl ConnectionStatus {
             exit_ip: None,
             bootstrap_percent: 0,
             kill_switch_active: true,
-            dns_protected: true,
-            udp_blocked: true,
-            ipv6_blocked: true,
+            dns_protected: false,
+            udp_blocked: false,
+            ipv6_blocked: false,
             fallback_active: false,
             message: message.to_string(),
             release_blockers,
@@ -200,20 +260,7 @@ pub struct ExitVerification {
     pub message: String,
 }
 
-#[derive(
-    Debug,
-    Clone,
-    PartialEq,
-    Eq,
-    Serialize,
-    Deserialize,
-    Debug,
-    Clone,
-    PartialEq,
-    Eq,
-    Serialize,
-    Deserialize,
-)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct FfiEnvelope<T> {
     pub protocol_version: u32,
     pub ok: bool,
