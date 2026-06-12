@@ -14,17 +14,12 @@ pub enum CountryPreferenceMode {
     Prefer,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
 #[serde(rename_all = "kebab-case")]
 pub enum ConnectionMode {
+    #[default]
     Strict,
     CompatibilityReducedProtection,
-}
-
-impl Default for ConnectionMode {
-    fn default() -> Self {
-        Self::Strict
-    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]

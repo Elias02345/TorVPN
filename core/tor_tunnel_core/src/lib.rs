@@ -9,7 +9,6 @@ pub use tor_config::*;
 
 use std::time::{SystemTime, UNIX_EPOCH};
 use tor_tunnel_diagnostics::{redact_log_line, RedactionPolicy};
-use tor_tunnel_leaktest::LeakSelfTestReport;
 use tor_tunnel_platform_contracts::capabilities;
 
 #[derive(Debug, thiserror::Error)]
