@@ -1,8 +1,9 @@
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Default)]
 #[serde(tag = "kind", rename_all = "kebab-case")]
 pub enum BridgeConfig {
+    #[default]
     None,
     ManualObfs4 {
         lines: Vec<String>,
@@ -13,12 +14,6 @@ pub enum BridgeConfig {
         command: String,
         args: Vec<String>,
     },
-}
-
-impl Default for BridgeConfig {
-    fn default() -> Self {
-        Self::None
-    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]

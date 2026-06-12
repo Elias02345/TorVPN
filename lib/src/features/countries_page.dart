@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../core/core_client.dart';
+import '../core/core_models.dart';
 import '../l10n/app_strings.dart';
 import '../theme/app_theme.dart';
 import 'shared.dart';
@@ -16,9 +17,18 @@ class CountriesPage extends StatelessWidget {
     return PageFrame(
       title: strings.countries,
       subtitle: strings.isGerman
-          ? 'Exit-Laender sind Praeferenzen, keine Standort-Garantien.'
-          : 'Exit countries are preferences, not location guarantees.',
+          ? 'Waehle eine einfache Exit-Praeferenz.'
+          : 'Choose a simple exit preference.',
       children: [
+        for (final profile in core.profiles) ...[
+          _ProfileChoice(
+            profile: profile,
+            selected: profile.id == core.selectedProfile.id,
+            onTap: () => core.setSelectedProfile(profile),
+          ),
+          const SizedBox(height: 10),
+        ],
+        const SizedBox(height: 4),
         Panel(
           color: AppColors.surfaceWarm,
           borderColor: AppColors.warn.withValues(alpha: 0.36),
@@ -30,141 +40,125 @@ class CountriesPage extends StatelessWidget {
               Expanded(
                 child: Text(
                   strings.isGerman
-                      ? 'Tor kann Exit-Wuensche ignorieren, wenn Stabilitaet oder Verfuegbarkeit es erfordern. Die App zeigt Fallbacks sichtbar an.'
-                      : 'Tor can ignore exit preferences when stability or availability requires it. The app keeps fallback visible.',
+                      ? 'Tor behandelt Laender als Wunsch. Wenn Relays fehlen oder instabil sind, kann ein anderes Exit-Land genutzt werden.'
+                      : 'Tor treats countries as a preference. If relays are missing or unstable, another exit country can be used.',
                 ),
               ),
             ],
           ),
         ),
         const SizedBox(height: 14),
-        InfoCard(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                strings.preferredExitCountries,
-                style: Theme.of(context).textTheme.titleMedium,
-              ),
-              const SizedBox(height: 14),
-              Wrap(
-                spacing: 10,
-                runSpacing: 10,
-                children: [
-                  for (final profile in core.profiles)
-                    ChoiceChip(
-                      label: Text(
-                        '${profile.name} (${profile.exitCountries.join(', ')})',
-                      ),
-                      selected: core.selectedProfile.id == profile.id,
-                      onSelected: (_) => core.setSelectedProfile(profile),
-                      selectedColor: AppColors.cyan.withValues(alpha: 0.18),
-                      side: const BorderSide(color: AppColors.border),
-                    ),
-                ],
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 14),
-        LayoutBuilder(
-          builder: (context, constraints) {
-            final columns = constraints.maxWidth >= 900 ? 2 : 1;
-            return GridView.count(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              crossAxisCount: columns,
-              mainAxisSpacing: 10,
-              crossAxisSpacing: 10,
-              childAspectRatio: columns == 2 ? 3.8 : 2.8,
-              children: [
-                for (final country in core.relayCountries)
-                  _CountryRelayCard(
-                    countryName: country.countryName,
-                    code: country.countryCode,
-                    exits: country.exitRelays,
-                    available: country.available,
-                    stability: country.stabilityScore,
-                    strings: strings,
-                  ),
-              ],
-            );
-          },
-        ),
+        _RelaySummary(core: core, strings: strings),
       ],
     );
   }
 }
 
-class _CountryRelayCard extends StatelessWidget {
-  const _CountryRelayCard({
-    required this.countryName,
-    required this.code,
-    required this.exits,
-    required this.available,
-    required this.stability,
-    required this.strings,
+class _ProfileChoice extends StatelessWidget {
+  const _ProfileChoice({
+    required this.profile,
+    required this.selected,
+    required this.onTap,
   });
 
-  final String countryName;
-  final String code;
-  final int exits;
-  final bool available;
-  final int stability;
+  final CountryProfile profile;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Panel(
+      color: selected ? AppColors.cyan.withValues(alpha: 0.10) : null,
+      borderColor: selected ? AppColors.cyan : AppColors.border,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(8),
+        onTap: onTap,
+        child: Row(
+          children: [
+            Icon(
+              selected ? Icons.check_circle_rounded : Icons.circle_outlined,
+              color: selected ? AppColors.cyan : AppColors.textMuted,
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    profile.name,
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                  const SizedBox(height: 4),
+                  Text(profile.description),
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 6,
+                    runSpacing: 6,
+                    children: [
+                      for (final country in profile.exitCountries)
+                        StatusPill(
+                          icon: Icons.flag_rounded,
+                          label: country,
+                          color: AppColors.cyan,
+                        ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _RelaySummary extends StatelessWidget {
+  const _RelaySummary({required this.core, required this.strings});
+
+  final CoreClient core;
   final AppStrings strings;
 
   @override
   Widget build(BuildContext context) {
-    final color = available ? AppColors.good : AppColors.warn;
-    return InfoCard(
-      child: Row(
+    return Panel(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            width: 56,
-            height: 56,
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              color: AppColors.surfaceHigh,
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: AppColors.border),
-            ),
-            child: Text(
-              code,
-              style: const TextStyle(
-                fontWeight: FontWeight.w900,
-                color: AppColors.textHigh,
-              ),
-            ),
+          SectionHeader(
+            icon: Icons.hub_rounded,
+            title: strings.isGerman ? 'Relay-Uebersicht' : 'Relay summary',
+            subtitle: strings.isGerman
+                ? 'Nur zur Orientierung, nicht als Garantie.'
+                : 'For orientation only, not a guarantee.',
           ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.center,
+          const SizedBox(height: 12),
+          for (final country in core.relayCountries) ...[
+            Row(
               children: [
-                Text(
-                  countryName,
-                  style: Theme.of(context).textTheme.titleMedium,
+                SizedBox(
+                  width: 44,
+                  child: Text(
+                    country.countryCode,
+                    style: const TextStyle(
+                      color: AppColors.textHigh,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
                 ),
-                const SizedBox(height: 4),
+                Expanded(child: Text(country.countryName)),
                 Text(
-                  strings.isGerman
-                      ? '$exits Exit-Relays · Stabilität $stability%'
-                      : '$exits exit relays · Stability $stability%',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+                  '${country.exitRelays}',
+                  style: const TextStyle(
+                    color: AppColors.textHigh,
+                    fontWeight: FontWeight.w800,
+                  ),
                 ),
               ],
             ),
-          ),
-          const SizedBox(width: 12),
-          StatusPill(
-            icon: available ? Icons.check_rounded : Icons.pause_rounded,
-            label: available
-                ? (strings.isGerman ? 'Verfügbar' : 'Available')
-                : (strings.isGerman ? 'Keine Exits' : 'No exits'),
-            color: color,
-          ),
+            if (country != core.relayCountries.last)
+              const Divider(color: AppColors.border),
+          ],
         ],
       ),
     );

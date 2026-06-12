@@ -13,8 +13,8 @@ crate-type = ["rlib", "cdylib", "staticlib"]
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 thiserror = "2.0"
-tor_tunnel_diagnostics = { path = "../tor_tunnel_diagnostics" }
-tor_tunnel_leaktest = { path = "../tor_tunnel_leaktest" }
-tor_tunnel_platform_contracts = { path = "../tor_tunnel_platform_contracts" }
-tor_tunnel_tor_manager = { path = "../tor_tunnel_tor_manager" }
-tor_tunnel_tunnel_engine = { path = "../tor_tunnel_tunnel_engine" }
+tor_tunnel_diagnostics = { path = "../tor_tunnel_diagnostics", version = "0.1.0" }
+tor_tunnel_leaktest = { path = "../tor_tunnel_leaktest", version = "0.1.0" }
+tor_tunnel_platform_contracts = { path = "../tor_tunnel_platform_contracts", version = "0.1.0" }
+tor_tunnel_tor_manager = { path = "../tor_tunnel_tor_manager", version = "0.1.0" }
+tor_tunnel_tunnel_engine = { path = "../tor_tunnel_tunnel_engine", version = "0.1.0" }

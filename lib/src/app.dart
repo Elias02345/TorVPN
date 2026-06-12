@@ -1,11 +1,12 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 
-import 'core/core_models.dart';
+import 'core/android_vpn_client.dart';
 import 'core/core_client.dart';
+import 'core/core_models.dart';
 import 'core/ffi_core_client.dart';
 import 'core/mock_core_client.dart';
-import 'features/activity_page.dart';
-import 'features/app_exceptions_page.dart';
 import 'features/countries_page.dart';
 import 'features/home_page.dart';
 import 'features/settings_page.dart';
@@ -20,8 +21,15 @@ class TorTunnelApp extends StatefulWidget {
 }
 
 class _TorTunnelAppState extends State<TorTunnelApp> {
-  late final CoreClient _core = FfiCoreClient.tryCreate() ?? MockCoreClient();
+  late final CoreClient _core = _createCoreClient();
   LanguageChoice _language = LanguageChoice.de;
+
+  CoreClient _createCoreClient() {
+    if (Platform.isAndroid) {
+      return AndroidVpnClient();
+    }
+    return FfiCoreClient.tryCreate() ?? MockCoreClient();
+  }
 
   @override
   void dispose() {
@@ -80,16 +88,12 @@ class _TorTunnelShellState extends State<TorTunnelShell> {
     final destinations = [
       _Destination(Icons.power_settings_new_rounded, widget.strings.home),
       _Destination(Icons.public_rounded, widget.strings.countries),
-      _Destination(Icons.apps_rounded, widget.strings.appExceptions),
-      _Destination(Icons.timeline_rounded, widget.strings.activity),
       _Destination(Icons.tune_rounded, widget.strings.settings),
     ];
 
     final pages = [
       HomePage(core: widget.core, strings: widget.strings),
       CountriesPage(core: widget.core, strings: widget.strings),
-      AppExceptionsPage(core: widget.core, strings: widget.strings),
-      ActivityPage(core: widget.core, strings: widget.strings),
       SettingsPage(
         core: widget.core,
         strings: widget.strings,
