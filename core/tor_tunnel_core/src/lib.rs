@@ -511,7 +511,7 @@ mod tests {
     }
 
     #[test]
-    fn connect_sets_leak_protection_flags() {
+    fn connect_without_production_adapter_does_not_claim_leak_protection() {
         let mut core = TorTunnelCore::new();
         let request = ConnectionRequest {
             platform: Platform::Android,
@@ -523,18 +523,20 @@ mod tests {
             isolate_by_app: true,
         };
 
-        let status = core.connect(request).expect("connect should succeed");
+        let result = core.connect(request);
+        let status = core.status();
 
-        assert!(status.kill_switch_active);
-        assert!(status.dns_protected);
+        assert!(matches!(result, Err(CoreError::UnsupportedPlatform)));
+        assert!(!status.kill_switch_active);
+        assert!(!status.dns_protected);
         assert!(!status.udp_blocked);
         assert!(!status.ipv6_blocked);
     }
 
     #[test]
-    fn diagnostics_include_torrc_preview() {
+    fn diagnostics_omit_torrc_preview_after_failed_connect() {
         let mut core = TorTunnelCore::new();
-        core.connect(ConnectionRequest {
+        let result = core.connect(ConnectionRequest {
             platform: Platform::Linux,
             mode: ConnectionMode::CompatibilityReducedProtection,
             profile: profile(),
@@ -542,15 +544,12 @@ mod tests {
             app_exceptions: Vec::new(),
             auto_fallback: true,
             isolate_by_app: true,
-        })
-        .expect("connect should succeed");
+        });
 
         let diagnostics = core.export_diagnostics();
-        let torrc = diagnostics.tor_config_preview.expect("torrc preview");
 
-        assert!(torrc.contains("ExitNodes {DE},{NL}"));
-        assert!(torrc.contains("StrictNodes 0"));
-        assert!(torrc.contains("DNSPort 5353"));
+        assert!(matches!(result, Err(CoreError::UnsupportedPlatform)));
+        assert_eq!(diagnostics.tor_config_preview, None);
     }
 
     #[test]
