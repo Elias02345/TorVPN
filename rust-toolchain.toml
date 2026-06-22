@@ -1,0 +1,6 @@
+# Pin the Rust toolchain so local builds match CI (.github/workflows/ci.yml uses
+# dtolnay/rust-toolchain@stable with rustfmt + clippy). rustup installs the
+# listed components automatically on first use.
+[toolchain]
+channel = "stable"
+components = ["rustfmt", "clippy"]

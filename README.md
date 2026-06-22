@@ -45,12 +45,33 @@ flutter analyze
 cargo test
 ```
 
-On Windows, make sure Visual Studio C++ Build Tools are installed and that Git's `usr/bin/link.exe` does not shadow MSVC `link.exe`. If necessary, run Rust checks with:
+### Building on Windows
+
+The Rust `*-pc-windows-msvc` toolchain needs the **Visual Studio C++ build tools**
+*and* the **Windows SDK** (`kernel32.lib` and friends). It also requires the MSVC
+`link.exe` to win over Git's `usr/bin/link.exe`, which otherwise shadows it on PATH.
+
+A normal PowerShell session provides neither, so run Cargo through the bundled
+wrapper, which loads the `vcvars64` environment first and forwards all arguments
+to `cargo`:
 
 ```powershell
-$env:RUSTFLAGS='-C linker=rust-lld'
-cargo test
+tools/dev-cargo.ps1 build --workspace
+tools/dev-cargo.ps1 test --workspace
+tools/dev-cargo.ps1 fmt --check
+# Quote the `--` separator so PowerShell forwards it instead of consuming it:
+tools/dev-cargo.ps1 clippy --workspace --all-targets '--' -D warnings
 ```
+
+If the Windows SDK is missing, install it once via the Visual Studio Installer:
+
+```powershell
+& "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\setup.exe" modify `
+  --installPath "C:\Program Files\Microsoft Visual Studio\2022\Community" `
+  --add Microsoft.VisualStudio.Component.Windows11SDK.22621 --quiet --norestart
+```
+
+Linux and macOS can call `cargo` directly.
 
 ## License
 
