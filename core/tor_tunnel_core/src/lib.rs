@@ -9,7 +9,6 @@ pub use tor_config::*;
 
 use std::time::{SystemTime, UNIX_EPOCH};
 use tor_tunnel_diagnostics::{redact_log_line, RedactionPolicy};
-use tor_tunnel_leaktest::LeakSelfTestReport;
 use tor_tunnel_platform_contracts::capabilities;
 
 #[derive(Debug, thiserror::Error)]
@@ -370,7 +369,7 @@ mod tests {
 
         assert!(torrc.contains("ExitNodes {DE},{NL}"));
         assert!(torrc.contains("StrictNodes 0"));
-        assert!(torrc.contains("DNSPort 5353"));
+        assert!(torrc.contains("DNSPort 127.0.0.1:5353"));
     }
 
     #[test]

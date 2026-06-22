@@ -8,4 +8,4 @@ description = "Redacted local diagnostics for TorTunnel."
 
 [dependencies]
 serde = { version = "1.0", features = ["derive"] }
-tor_tunnel_platform_contracts = { path = "../tor_tunnel_platform_contracts" }
+tor_tunnel_platform_contracts = { path = "../tor_tunnel_platform_contracts", version = "0.1.0" }
