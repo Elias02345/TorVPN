@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../core/core_models.dart';
-import '../core/mock_core_client.dart';
+import '../core/core_client.dart';
 import '../l10n/app_strings.dart';
 import '../theme/app_theme.dart';
 import 'shared.dart';
@@ -15,7 +15,7 @@ class SettingsPage extends StatelessWidget {
     super.key,
   });
 
-  final MockCoreClient core;
+  final CoreClient core;
   final AppStrings strings;
   final LanguageChoice language;
   final ValueChanged<LanguageChoice> onLanguageChanged;

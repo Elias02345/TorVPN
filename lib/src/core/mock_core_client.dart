@@ -1,10 +1,13 @@
-import 'package:flutter/foundation.dart';
-
+import 'core_client.dart';
 import 'core_models.dart';
 
-class MockCoreClient extends ChangeNotifier {
+/// Pure-Dart development core. Mirrors the Rust core surface so the UI is fully
+/// usable when the native `tor_tunnel_core` library is unavailable. It never
+/// claims `protected`: it deliberately surfaces release blockers instead.
+class MockCoreClient extends CoreClient {
   MockCoreClient();
 
+  @override
   final List<CountryProfile> profiles = const [
     CountryProfile(
       id: 'eu-privacy',
@@ -26,6 +29,7 @@ class MockCoreClient extends ChangeNotifier {
     ),
   ];
 
+  @override
   final List<RelayCountryStatus> relayCountries = const [
     RelayCountryStatus(
       countryCode: 'DE',
@@ -57,6 +61,7 @@ class MockCoreClient extends ChangeNotifier {
     ),
   ];
 
+  @override
   CountryProfile selectedProfile = const CountryProfile(
     id: 'eu-privacy',
     name: 'EU Privacy',
@@ -64,19 +69,29 @@ class MockCoreClient extends ChangeNotifier {
     description: 'Stable European exits with transparent fallback.',
   );
 
+  @override
   ConnectionMode connectionMode = ConnectionMode.strict;
+  @override
   BridgeConfig bridgeConfig = const BridgeConfig(
     kind: BridgeKind.none,
     label: 'No bridges',
   );
+  @override
   ConnectionStatus status = ConnectionStatus.disconnected();
+  @override
   ExitVerification? lastVerification;
+  @override
   LeakSelfTestReport? lastLeakSelfTest;
+  @override
   bool autoConnect = false;
+  @override
   bool autoRotation = false;
+  @override
   bool localVerboseDiagnostics = false;
+  @override
   bool onboardingDismissed = false;
 
+  @override
   List<AppException> appExceptions = const [
     AppException(
       appId: 'com.bank.mobile',
@@ -98,6 +113,7 @@ class MockCoreClient extends ChangeNotifier {
     ),
   ];
 
+  @override
   Future<void> connect() async {
     final enabledExceptions = appExceptions
         .where((exception) => exception.enabled)
@@ -185,12 +201,14 @@ class MockCoreClient extends ChangeNotifier {
     notifyListeners();
   }
 
+  @override
   void disconnect() {
     status = ConnectionStatus.disconnected();
     lastVerification = null;
     notifyListeners();
   }
 
+  @override
   Future<void> rotateIdentity() async {
     if (!status.isActive) {
       return;
@@ -215,6 +233,7 @@ class MockCoreClient extends ChangeNotifier {
     notifyListeners();
   }
 
+  @override
   void setSelectedProfile(CountryProfile profile) {
     selectedProfile = profile;
     if (status.isActive) {
@@ -229,6 +248,7 @@ class MockCoreClient extends ChangeNotifier {
     notifyListeners();
   }
 
+  @override
   void setConnectionMode(ConnectionMode mode) {
     connectionMode = mode;
     if (mode == ConnectionMode.strict) {
@@ -253,6 +273,7 @@ class MockCoreClient extends ChangeNotifier {
     notifyListeners();
   }
 
+  @override
   void setBridgeConfig(BridgeConfig value) {
     bridgeConfig = value;
     status = status.copyWith(
@@ -262,26 +283,31 @@ class MockCoreClient extends ChangeNotifier {
     notifyListeners();
   }
 
+  @override
   void setAutoConnect(bool value) {
     autoConnect = value;
     notifyListeners();
   }
 
+  @override
   void setAutoRotation(bool value) {
     autoRotation = value;
     notifyListeners();
   }
 
+  @override
   void setVerboseDiagnostics(bool value) {
     localVerboseDiagnostics = value;
     notifyListeners();
   }
 
+  @override
   void dismissOnboarding() {
     onboardingDismissed = true;
     notifyListeners();
   }
 
+  @override
   void toggleAppException(String appId, bool enabled) {
     if (connectionMode == ConnectionMode.strict && enabled) {
       status = status.copyWith(
@@ -302,6 +328,7 @@ class MockCoreClient extends ChangeNotifier {
     notifyListeners();
   }
 
+  @override
   ExitVerification verifyExit() {
     lastVerification = ExitVerification(
       isTor: status.isActive,
@@ -316,6 +343,7 @@ class MockCoreClient extends ChangeNotifier {
     return lastVerification!;
   }
 
+  @override
   String exportDiagnostics() {
     final exceptions = appExceptions
         .where((exception) => exception.enabled)
@@ -339,6 +367,7 @@ class MockCoreClient extends ChangeNotifier {
     ].join('\n');
   }
 
+  @override
   LeakSelfTestReport runLeakSelfTest() {
     lastLeakSelfTest = const LeakSelfTestReport(
       strictMode: true,

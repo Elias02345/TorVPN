@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
+import 'core/core_client.dart';
 import 'core/core_models.dart';
+import 'core/ffi_core_client.dart';
 import 'core/mock_core_client.dart';
 import 'features/activity_page.dart';
 import 'features/app_exceptions_page.dart';
@@ -18,7 +20,9 @@ class TorTunnelApp extends StatefulWidget {
 }
 
 class _TorTunnelAppState extends State<TorTunnelApp> {
-  final MockCoreClient _core = MockCoreClient();
+  // Prefer the real Rust core over FFI; fall back to the pure-Dart development
+  // core when the native library cannot be loaded (e.g. cdylib not bundled).
+  final CoreClient _core = FfiCoreClient.tryOpen() ?? MockCoreClient();
   LanguageChoice _language = LanguageChoice.de;
 
   @override
@@ -61,7 +65,7 @@ class TorTunnelShell extends StatefulWidget {
     super.key,
   });
 
-  final MockCoreClient core;
+  final CoreClient core;
   final AppStrings strings;
   final LanguageChoice language;
   final ValueChanged<LanguageChoice> onLanguageChanged;

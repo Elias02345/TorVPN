@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../core/core_models.dart';
-import '../core/mock_core_client.dart';
+import '../core/core_client.dart';
 import '../l10n/app_strings.dart';
 import '../theme/app_theme.dart';
 import 'shared.dart';
@@ -9,7 +9,7 @@ import 'shared.dart';
 class HomePage extends StatelessWidget {
   const HomePage({required this.core, required this.strings, super.key});
 
-  final MockCoreClient core;
+  final CoreClient core;
   final AppStrings strings;
 
   @override
@@ -61,7 +61,7 @@ class HomePage extends StatelessWidget {
 class _OnboardingNotice extends StatelessWidget {
   const _OnboardingNotice({required this.core, required this.strings});
 
-  final MockCoreClient core;
+  final CoreClient core;
   final AppStrings strings;
 
   @override
@@ -102,7 +102,7 @@ class _OnboardingNotice extends StatelessWidget {
 class _ConnectionHero extends StatelessWidget {
   const _ConnectionHero({required this.core, required this.strings});
 
-  final MockCoreClient core;
+  final CoreClient core;
   final AppStrings strings;
 
   @override
@@ -231,7 +231,7 @@ class _ConnectionHero extends StatelessWidget {
 class _ProfilePanel extends StatelessWidget {
   const _ProfilePanel({required this.core, required this.strings});
 
-  final MockCoreClient core;
+  final CoreClient core;
   final AppStrings strings;
 
   @override
@@ -289,7 +289,7 @@ class _ProfilePanel extends StatelessWidget {
 class _ProtectionGrid extends StatelessWidget {
   const _ProtectionGrid({required this.core, required this.strings});
 
-  final MockCoreClient core;
+  final CoreClient core;
   final AppStrings strings;
 
   @override
@@ -340,7 +340,7 @@ class _ProtectionGrid extends StatelessWidget {
 class _ReleaseBlockers extends StatelessWidget {
   const _ReleaseBlockers({required this.core, required this.strings});
 
-  final MockCoreClient core;
+  final CoreClient core;
   final AppStrings strings;
 
   @override
