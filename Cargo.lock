@@ -286,6 +286,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "tortunnel-helper"
+version = "0.1.0"
+dependencies = [
+ "clap",
+ "tor_tunnel_core",
+ "tor_tunnel_tunnel_engine",
+]
+
+[[package]]
 name = "unicode-ident"
 version = "1.0.24"
 source = "registry+https://github.com/rust-lang/crates.io-index"

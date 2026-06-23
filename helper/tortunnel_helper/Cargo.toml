@@ -1,0 +1,16 @@
+[package]
+name = "tortunnel-helper"
+version = "0.1.0"
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "Privileged Linux helper that builds the system-wide Tor tunnel (TUN + nftables + tun2proxy)."
+
+[[bin]]
+name = "tortunnel-helper"
+path = "src/main.rs"
+
+[dependencies]
+clap = { version = "4", features = ["derive"] }
+tor_tunnel_core = { path = "../../core/tor_tunnel_core", version = "0.1.0" }
+tor_tunnel_tunnel_engine = { path = "../../core/tor_tunnel_tunnel_engine", version = "0.1.0" }

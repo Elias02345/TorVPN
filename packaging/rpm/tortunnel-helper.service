@@ -3,12 +3,14 @@ Description=TorTunnel privileged helper
 After=network-online.target
 
 [Service]
-Type=notify
-ExecStart=/usr/libexec/tortunnel/tortunnel-helper --strict
+Type=simple
+Environment=TORTUNNEL_COUNTRY=DE
+EnvironmentFile=-/etc/tortunnel/helper.env
+ExecStart=/usr/libexec/tortunnel/tortunnel-helper up --country ${TORTUNNEL_COUNTRY}
+ExecStopPost=/usr/libexec/tortunnel/tortunnel-helper down
 Restart=on-failure
+RestartSec=2s
 CapabilityBoundingSet=CAP_NET_ADMIN CAP_NET_RAW
-NoNewPrivileges=true
-PrivateTmp=true
 ProtectHome=true
 ProtectSystem=strict
 ReadWritePaths=/run/tortunnel /var/lib/tortunnel

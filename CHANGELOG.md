@@ -11,10 +11,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **`tortunnel up`** launches a real `tor` process and exposes a working SOCKS
   proxy, following bootstrap on stdout. A CI integration test installs tor and
   verifies the CLI reaches a bootstrapped proxy end-to-end.
+- Privileged Linux **system-tunnel helper** (`tortunnel-helper`): applies the
+  nftables kill-switch, creates the TUN device, and runs tor + `tun2proxy` to
+  route all traffic through Tor. Wired into the systemd/polkit units with
+  fail-closed `ExecStopPost` teardown.
 - **nftables kill-switch generator** (`KillSwitchPlan`) for the Linux tunnel
-  adapter: default-deny output, tor-uid + loopback allow, TCP→TransPort and
-  DNS→DNSPort redirect, UDP/IPv6 drop. Pure and unit-tested (device leak-test
-  verification still required before it is trusted).
+  adapter: default-deny output; loopback, the TUN device, and tor's uid allowed;
+  UDP and IPv6 dropped. Pure and unit-tested (device leak-test verification still
+  required before it is trusted).
 - Interactive exit-node **world map**: a tappable world map of countries that
   host Tor exit relays, plus a country list, backed by a bundled snapshot with a
   fail-closed "refresh live over Tor once connected" seam (no clearnet leak).

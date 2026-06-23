@@ -40,11 +40,13 @@ jobs:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
-      - run: cargo build -p tortunnel-cli --release
-      - name: Package CLI
+      - run: cargo build -p tortunnel-cli -p tortunnel-helper --release
+      - name: Package CLI + privileged helper
         run: |
           mkdir -p dist
-          cp target/release/tortunnel dist/
+          cp target/release/tortunnel target/release/tortunnel-helper dist/
+          cp packaging/debian/tortunnel-helper.service dist/
+          cp packaging/debian/org.tortunnel.helper.policy dist/
           cp README.md LICENSE dist/
           tar -czf tortunnel-cli-linux-x86_64.tar.gz -C dist .
       - uses: actions/upload-artifact@v4
