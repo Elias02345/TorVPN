@@ -6,8 +6,8 @@ import 'core/ffi_core_client.dart';
 import 'core/mock_core_client.dart';
 import 'features/activity_page.dart';
 import 'features/app_exceptions_page.dart';
-import 'features/countries_page.dart';
 import 'features/home_page.dart';
+import 'features/world_map_page.dart';
 import 'features/settings_page.dart';
 import 'l10n/app_strings.dart';
 import 'theme/app_theme.dart';
@@ -89,7 +89,7 @@ class _TorTunnelShellState extends State<TorTunnelShell> {
 
     final pages = [
       HomePage(core: widget.core, strings: widget.strings),
-      CountriesPage(core: widget.core, strings: widget.strings),
+      WorldMapPage(core: widget.core, strings: widget.strings),
       AppExceptionsPage(core: widget.core, strings: widget.strings),
       ActivityPage(core: widget.core, strings: widget.strings),
       SettingsPage(

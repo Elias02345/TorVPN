@@ -8,6 +8,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Interactive exit-node **world map**: a tappable world map of countries that
+  host Tor exit relays, plus a country list, backed by a bundled snapshot with a
+  fail-closed "refresh live over Tor once connected" seam (no clearnet leak).
 - Headless `tortunnel` CLI (`tortunnel-cli`) for servers and headless Linux:
   `status`, `countries`, `torrc`, `connect` (policy preview), and `doctor`.
 - `CoreClient` abstraction with swappable `MockCoreClient` (pure-Dart development

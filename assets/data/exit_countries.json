@@ -1,0 +1,25 @@
+{
+  "schema": 1,
+  "updated": "2026-06-23",
+  "source": "Bundled snapshot of Tor exit relays (Tor Project Onionoo). Refreshed live over Tor once connected.",
+  "countries": [
+    { "code": "DE", "name": "Germany", "lat": 51.2, "lon": 10.4, "exitRelays": 438, "available": true },
+    { "code": "NL", "name": "Netherlands", "lat": 52.1, "lon": 5.3, "exitRelays": 372, "available": true },
+    { "code": "US", "name": "United States", "lat": 39.8, "lon": -98.6, "exitRelays": 561, "available": true },
+    { "code": "FR", "name": "France", "lat": 46.6, "lon": 2.2, "exitRelays": 214, "available": true },
+    { "code": "SE", "name": "Sweden", "lat": 60.1, "lon": 18.6, "exitRelays": 96, "available": true },
+    { "code": "CH", "name": "Switzerland", "lat": 46.8, "lon": 8.2, "exitRelays": 143, "available": true },
+    { "code": "GB", "name": "United Kingdom", "lat": 54.0, "lon": -2.0, "exitRelays": 108, "available": true },
+    { "code": "CA", "name": "Canada", "lat": 56.1, "lon": -106.3, "exitRelays": 121, "available": true },
+    { "code": "FI", "name": "Finland", "lat": 64.0, "lon": 26.0, "exitRelays": 71, "available": true },
+    { "code": "AT", "name": "Austria", "lat": 47.5, "lon": 14.5, "exitRelays": 62, "available": true },
+    { "code": "RO", "name": "Romania", "lat": 45.9, "lon": 24.9, "exitRelays": 88, "available": true },
+    { "code": "LU", "name": "Luxembourg", "lat": 49.8, "lon": 6.1, "exitRelays": 54, "available": true },
+    { "code": "PL", "name": "Poland", "lat": 51.9, "lon": 19.1, "exitRelays": 47, "available": true },
+    { "code": "CZ", "name": "Czechia", "lat": 49.8, "lon": 15.5, "exitRelays": 39, "available": true },
+    { "code": "ES", "name": "Spain", "lat": 40.0, "lon": -3.7, "exitRelays": 33, "available": true },
+    { "code": "JP", "name": "Japan", "lat": 36.2, "lon": 138.3, "exitRelays": 18, "available": true },
+    { "code": "AU", "name": "Australia", "lat": -25.3, "lon": 133.8, "exitRelays": 12, "available": true },
+    { "code": "IS", "name": "Iceland", "lat": 64.9, "lon": -19.0, "exitRelays": 0, "available": false }
+  ]
+}
