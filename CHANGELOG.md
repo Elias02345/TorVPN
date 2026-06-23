@@ -8,6 +8,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Real Android **VpnService**: strict IPv4-only TUN interface, foreground service
+  with notification + disconnect action, socket protection, sticky lifecycle, and
+  a native `tun2proxy` engine seam (fail-closed when the engine is absent).
 - **`tortunnel up`** launches a real `tor` process and exposes a working SOCKS
   proxy, following bootstrap on stdout. A CI integration test installs tor and
   verifies the CLI reaches a bootstrapped proxy end-to-end.
