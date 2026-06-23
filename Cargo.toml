@@ -7,6 +7,7 @@ members = [
     "core/tor_tunnel_platform_contracts",
     "core/tor_tunnel_diagnostics",
     "core/tor_tunnel_leaktest",
+    "cli/tortunnel_cli",
 ]
 
 [workspace.package]

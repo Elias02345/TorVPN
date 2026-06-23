@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Headless `tortunnel` CLI (`tortunnel-cli`) for servers and headless Linux:
+  `status`, `countries`, `torrc`, `connect` (policy preview), and `doctor`.
 - `CoreClient` abstraction with swappable `MockCoreClient` (pure-Dart development
   core) and `FfiCoreClient` (real Rust core over the versioned C ABI).
 - Dart ⇄ Rust FFI round-trip test exercising the built cdylib.
