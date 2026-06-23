@@ -11,8 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `CoreClient` abstraction with swappable `MockCoreClient` (pure-Dart development
   core) and `FfiCoreClient` (real Rust core over the versioned C ABI).
 - Dart ⇄ Rust FFI round-trip test exercising the built cdylib.
-- Tor runtime manager building blocks in `tor_tunnel_tor_manager`: ControlPort
-  command/reply parsing, bootstrap-progress parsing, and a testable launch plan.
+- Tor runtime manager in `tor_tunnel_tor_manager`: ControlPort command/reply
+  parsing, bootstrap-progress parsing, a testable launch plan, and a fail-closed
+  `TorService` lifecycle state machine (Stopped → Starting → Bootstrapping →
+  Running / Failed), driven by a fakeable launcher seam.
 - `tools/dev-cargo.ps1` wrapper that runs Cargo inside the MSVC build
   environment on Windows; `rust-toolchain.toml`; `.gitattributes` line-ending
   normalization.

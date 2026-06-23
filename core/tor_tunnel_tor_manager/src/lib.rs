@@ -1,6 +1,7 @@
 mod bootstrap;
 mod control;
 mod launch;
+mod service;
 
 pub use bootstrap::{parse_bootstrap_progress, BootstrapStatus};
 pub use control::{
@@ -8,6 +9,7 @@ pub use control::{
     SIGNAL_NEWNYM, TAKE_OWNERSHIP,
 };
 pub use launch::{StdTorLauncher, TorLaunchPlan, TorLauncher};
+pub use service::{TorService, TorServiceError, TorServiceState};
 
 use serde::{Deserialize, Serialize};
 
