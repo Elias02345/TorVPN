@@ -1,8 +1,9 @@
 name: Release
 
-# Builds distributable artifacts on a version tag. This is a scaffold: it builds
-# UNSIGNED artifacts. Production code-signing keys must never be committed; supply
-# them via GitHub Actions secrets and an offline release process before stable.
+# Builds distributable artifacts on a version tag and publishes a GitHub
+# PRE-RELEASE. Everything here is UNSIGNED and the app does not yet provide a
+# real Tor tunnel — the release is a technology preview only. Production signing
+# keys must never be committed; supply them via Actions secrets before stable.
 
 on:
   push:
@@ -10,7 +11,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   android-apk:
@@ -29,24 +30,110 @@ jobs:
       - run: flutter build apk --debug
       - uses: actions/upload-artifact@v4
         with:
-          name: tortunnel-android-debug-apk
+          name: android-apk
           path: build/app/outputs/flutter-apk/app-debug.apk
           if-no-files-found: error
 
-  core-cdylib:
-    strategy:
-      matrix:
-        os: [ubuntu-latest, windows-latest]
-    runs-on: ${{ matrix.os }}
+  linux-cli:
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
-      - run: cargo build -p tor_tunnel_core --release
+      - run: cargo build -p tortunnel-cli --release
+      - name: Package CLI
+        run: |
+          mkdir -p dist
+          cp target/release/tortunnel dist/
+          cp README.md LICENSE dist/
+          tar -czf tortunnel-cli-linux-x86_64.tar.gz -C dist .
       - uses: actions/upload-artifact@v4
         with:
-          name: tor_tunnel_core-${{ matrix.os }}
-          path: |
-            target/release/libtor_tunnel_core.so
-            target/release/tor_tunnel_core.dll
-          if-no-files-found: ignore
+          name: linux-cli
+          path: tortunnel-cli-linux-x86_64.tar.gz
+          if-no-files-found: error
+
+  linux-desktop:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Linux desktop dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang cmake ninja-build pkg-config libgtk-3-dev liblzma-dev
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - run: flutter config --enable-linux-desktop
+      - run: flutter pub get
+      - run: flutter build linux --release
+      - name: Bundle native core
+        run: |
+          cargo build -p tor_tunnel_core --release
+          cp target/release/libtor_tunnel_core.so build/linux/x64/release/bundle/lib/ || true
+      - name: Archive bundle
+        run: tar -czf tortunnel-linux-x64.tar.gz -C build/linux/x64/release/bundle .
+      - uses: actions/upload-artifact@v4
+        with:
+          name: linux-desktop
+          path: tortunnel-linux-x64.tar.gz
+          if-no-files-found: error
+
+  windows-desktop:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - run: flutter config --enable-windows-desktop
+      - run: flutter pub get
+      - run: flutter build windows --release
+      - name: Bundle native core and archive
+        shell: pwsh
+        run: |
+          cargo build -p tor_tunnel_core --release
+          $release = Get-ChildItem build/windows -Recurse -Directory -Filter Release | Select-Object -First 1
+          Copy-Item target/release/tor_tunnel_core.dll $release.FullName -ErrorAction SilentlyContinue
+          Compress-Archive -Path "$($release.FullName)/*" -DestinationPath tortunnel-windows-x64.zip -Force
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows-desktop
+          path: tortunnel-windows-x64.zip
+          if-no-files-found: error
+
+  release:
+    needs: [android-apk, linux-cli, linux-desktop, windows-desktop]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+      - name: Publish alpha pre-release
+        uses: softprops/action-gh-release@v2
+        with:
+          prerelease: true
+          name: "TorTunnel ${{ github.ref_name }} (alpha)"
+          files: artifacts/**/*
+          body: |
+            ## ⚠️ Alpha / technology preview — NOT for real anonymity
+
+            This is an **unsigned alpha build**. The privileged native tunnel
+            adapters are **not implemented yet**, so TorTunnel does **not** route
+            your traffic through Tor and provides **no anonymity**. Do not use it
+            to protect real activity. See the stable blockers in
+            `docs/audit/STABLE_BLOCKERS.md`.
+
+            ### Artifacts
+            - `android-apk` — debug, unsigned APK
+            - `linux-cli` — headless `tortunnel` CLI (x86_64)
+            - `linux-desktop` — Flutter desktop bundle (x64)
+            - `windows-desktop` — Flutter desktop app (x64)
+
+            Built automatically by the release workflow.
