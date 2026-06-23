@@ -13,3 +13,4 @@ path = "src/main.rs"
 [dependencies]
 clap = { version = "4", features = ["derive"] }
 tor_tunnel_core = { path = "../../core/tor_tunnel_core", version = "0.1.0" }
+tor_tunnel_tor_manager = { path = "../../core/tor_tunnel_tor_manager", version = "0.1.0" }

@@ -6,11 +6,18 @@
 //! Linux-only adapter that is not active yet, so `connect` previews the computed
 //! policy and is explicit that no traffic is tunneled.
 
+use std::path::PathBuf;
+use std::time::Duration;
+
 use clap::{Parser, Subcommand, ValueEnum};
 use tor_tunnel_core::{
     platform_contract, BridgeConfig, ConnectionMode, ConnectionRequest, ConnectionStatus,
     CountryPreferenceMode, CountryProfile, Platform, TorConfigBuilder, TorTunnelCore,
 };
+
+mod runtime;
+
+use runtime::{run_up, UpOptions};
 
 /// A representative set of countries that commonly host Tor exit relays.
 const KNOWN_EXIT_COUNTRIES: &[(&str, &str)] = &[
@@ -57,6 +64,25 @@ enum Command {
     },
     /// Check the host for a headless TorTunnel deployment.
     Doctor,
+    /// Launch tor and expose a working SOCKS proxy (does not capture system traffic).
+    Up {
+        #[arg(long, default_value = "DE")]
+        country: String,
+        #[arg(long, default_value = "9050")]
+        socks_port: u16,
+        /// Path to the tor binary (defaults to `tor` on PATH).
+        #[arg(long)]
+        tor_binary: Option<String>,
+        /// Tor data directory (defaults to a temp directory).
+        #[arg(long)]
+        data_dir: Option<String>,
+        /// Seconds to wait for bootstrap before giving up.
+        #[arg(long, default_value = "120")]
+        bootstrap_timeout: u64,
+        /// Exit as soon as tor is bootstrapped (for CI / health checks).
+        #[arg(long)]
+        check: bool,
+    },
 }
 
 #[derive(ValueEnum, Clone, Copy, Debug)]
@@ -82,6 +108,50 @@ fn main() {
         Command::Torrc { country } => print_torrc(&country),
         Command::Connect { country, mode } => print_connect(&country, mode.into()),
         Command::Doctor => print_doctor(),
+        Command::Up {
+            country,
+            socks_port,
+            tor_binary,
+            data_dir,
+            bootstrap_timeout,
+            check,
+        } => run_up_command(
+            &country,
+            socks_port,
+            tor_binary,
+            data_dir,
+            bootstrap_timeout,
+            check,
+        ),
+    }
+}
+
+fn run_up_command(
+    country: &str,
+    socks_port: u16,
+    tor_binary: Option<String>,
+    data_dir: Option<String>,
+    bootstrap_timeout: u64,
+    check: bool,
+) {
+    let tor = tor_binary
+        .map(PathBuf::from)
+        .or_else(|| which_tor().map(PathBuf::from))
+        .unwrap_or_else(|| PathBuf::from(if cfg!(windows) { "tor.exe" } else { "tor" }));
+    let dir = data_dir
+        .map(PathBuf::from)
+        .unwrap_or_else(|| std::env::temp_dir().join("tortunnel"));
+    let result = run_up(UpOptions {
+        profile: profile_for(country),
+        socks_port,
+        tor_binary: tor,
+        data_dir: dir,
+        bootstrap_timeout: Duration::from_secs(bootstrap_timeout),
+        check_only: check,
+    });
+    if let Err(err) = result {
+        eprintln!("error: {err}");
+        std::process::exit(1);
     }
 }
 

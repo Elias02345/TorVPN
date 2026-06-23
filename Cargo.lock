@@ -282,6 +282,7 @@ version = "0.1.0"
 dependencies = [
  "clap",
  "tor_tunnel_core",
+ "tor_tunnel_tor_manager",
 ]
 
 [[package]]

@@ -59,3 +59,25 @@ jobs:
           cache: true
       - run: flutter pub get
       - run: flutter build apk --debug
+
+  tor-integration:
+    # Proves the CLI genuinely launches tor and reaches a bootstrapped SOCKS proxy.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install tor
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y tor
+          # We run our own tor instance, so stop the auto-started system service.
+          sudo systemctl stop tor@default.service tor.service 2>/dev/null || true
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - run: cargo build -p tortunnel-cli --release
+      - name: Launch tor and verify bootstrap through the CLI
+        run: |
+          ./target/release/tortunnel up \
+            --check \
+            --socks-port 9150 \
+            --bootstrap-timeout 180 \
+            --data-dir "$RUNNER_TEMP/tortunnel-data"
