@@ -1,3 +1,7 @@
+mod nftables;
+
+pub use nftables::{KillSwitchPlan, TEARDOWN_COMMAND};
+
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
