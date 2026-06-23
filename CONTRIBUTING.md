@@ -11,13 +11,20 @@ TorTunnel accepts contributions that preserve the privacy model: no backend requ
 
 ## Checks
 
-Run the relevant checks before opening a pull request:
+Run the full gate before opening a pull request (the same jobs CI runs):
 
-```powershell
-flutter test
+```bash
 flutter analyze
-cargo test
+flutter test
+cargo fmt --check
+cargo clippy --workspace --all-targets -- -D warnings
+cargo test --workspace
+cargo deny check
 ```
+
+On Windows, run the Cargo commands through `tools/dev-cargo.ps1` so the MSVC
+linker and Windows SDK are on the path — see the
+[README build notes](README.md#building-on-windows) and [`CLAUDE.md`](CLAUDE.md).
 
 ## Documentation
 
