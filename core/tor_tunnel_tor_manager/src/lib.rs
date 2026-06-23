@@ -1,3 +1,14 @@
+mod bootstrap;
+mod control;
+mod launch;
+
+pub use bootstrap::{parse_bootstrap_progress, BootstrapStatus};
+pub use control::{
+    authenticate_with_cookie, parse_reply, value_for_key, ControlReply, GETINFO_BOOTSTRAP_PHASE,
+    SIGNAL_NEWNYM, TAKE_OWNERSHIP,
+};
+pub use launch::{StdTorLauncher, TorLaunchPlan, TorLauncher};
+
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
