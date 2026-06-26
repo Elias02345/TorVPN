@@ -75,9 +75,25 @@ jobs:
       - uses: Swatinem/rust-cache@v2
       - run: cargo build -p tortunnel-cli --release
       - name: Launch tor and verify bootstrap through the CLI
+        # Bootstrapping reaches the live Tor network, which can be slow from CI
+        # runners, so retry to absorb transient network flakiness.
         run: |
-          ./target/release/tortunnel up \
-            --check \
-            --socks-port 9150 \
-            --bootstrap-timeout 180 \
-            --data-dir "$RUNNER_TEMP/tortunnel-data"
+          attempt=1
+          max=3
+          while true; do
+            if ./target/release/tortunnel up \
+              --check \
+              --socks-port 9150 \
+              --bootstrap-timeout 300 \
+              --data-dir "$RUNNER_TEMP/tortunnel-data-$attempt"; then
+              echo "tor bootstrapped on attempt $attempt"
+              break
+            fi
+            if [ "$attempt" -ge "$max" ]; then
+              echo "tor failed to bootstrap after $max attempts"
+              exit 1
+            fi
+            echo "attempt $attempt did not bootstrap in time (network flake); retrying..."
+            attempt=$((attempt + 1))
+            sleep 5
+          done
