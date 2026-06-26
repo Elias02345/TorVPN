@@ -3,29 +3,41 @@ updates:
   - package-ecosystem: "cargo"
     directory: "/"
     schedule:
-      interval: "weekly"
-    open-pull-requests-limit: 10
+      interval: "monthly"
+    open-pull-requests-limit: 5
     commit-message:
       prefix: "deps(cargo)"
+    groups:
+      cargo:
+        patterns: ["*"]
 
   - package-ecosystem: "pub"
     directory: "/"
     schedule:
-      interval: "weekly"
-    open-pull-requests-limit: 10
+      interval: "monthly"
+    open-pull-requests-limit: 5
     commit-message:
       prefix: "deps(pub)"
+    groups:
+      pub:
+        patterns: ["*"]
 
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
-      interval: "weekly"
+      interval: "monthly"
     commit-message:
       prefix: "deps(actions)"
+    groups:
+      actions:
+        patterns: ["*"]
 
   - package-ecosystem: "gradle"
     directory: "/android"
     schedule:
-      interval: "weekly"
+      interval: "monthly"
     commit-message:
       prefix: "deps(gradle)"
+    groups:
+      gradle:
+        patterns: ["*"]
