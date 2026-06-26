@@ -8,6 +8,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Windows tunnel **service** (`tortunnel-winsvc`): Wintun (via `tun2proxy`) plus a
+  WFP-backed kill-switch through the Windows firewall (block all outbound except
+  tor), with fail-closed teardown. Pure command builders unit-tested.
 - Real Android **VpnService**: strict IPv4-only TUN interface, foreground service
   with notification + disconnect action, socket protection, sticky lifecycle, and
   a native `tun2proxy` engine seam (fail-closed when the engine is absent).

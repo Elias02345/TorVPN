@@ -1,0 +1,15 @@
+[package]
+name = "tortunnel-winsvc"
+version = "0.1.0"
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "Windows service that builds the system-wide Tor tunnel (Wintun via tun2proxy + WFP kill-switch)."
+
+[[bin]]
+name = "tortunnel-winsvc"
+path = "src/main.rs"
+
+[dependencies]
+clap = { version = "4", features = ["derive"] }
+tor_tunnel_core = { path = "../../core/tor_tunnel_core", version = "0.1.0" }

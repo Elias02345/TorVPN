@@ -9,6 +9,7 @@ members = [
     "core/tor_tunnel_leaktest",
     "cli/tortunnel_cli",
     "helper/tortunnel_helper",
+    "windows-service/tortunnel_winsvc",
 ]
 
 [workspace.package]

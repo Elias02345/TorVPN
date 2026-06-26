@@ -97,12 +97,13 @@ jobs:
       - run: flutter config --enable-windows-desktop
       - run: flutter pub get
       - run: flutter build windows --release
-      - name: Bundle native core and archive
+      - name: Bundle native core + service and archive
         shell: pwsh
         run: |
-          cargo build -p tor_tunnel_core --release
+          cargo build -p tor_tunnel_core -p tortunnel-winsvc --release
           $release = Get-ChildItem build/windows -Recurse -Directory -Filter Release | Select-Object -First 1
           Copy-Item target/release/tor_tunnel_core.dll $release.FullName -ErrorAction SilentlyContinue
+          Copy-Item target/release/tortunnel-winsvc.exe $release.FullName -ErrorAction SilentlyContinue
           Compress-Archive -Path "$($release.FullName)/*" -DestinationPath tortunnel-windows-x64.zip -Force
       - uses: actions/upload-artifact@v4
         with:
@@ -124,18 +125,21 @@ jobs:
           name: "TorTunnel ${{ github.ref_name }} (alpha)"
           files: artifacts/**/*
           body: |
-            ## ⚠️ Alpha / technology preview — NOT for real anonymity
+            ## ⚠️ Alpha / technology preview — NOT yet verified for anonymity
 
-            This is an **unsigned alpha build**. The privileged native tunnel
-            adapters are **not implemented yet**, so TorTunnel does **not** route
-            your traffic through Tor and provides **no anonymity**. Do not use it
-            to protect real activity. See the stable blockers in
-            `docs/audit/STABLE_BLOCKERS.md`.
+            This is an **unsigned alpha build**. The headless Linux CLI
+            (`tortunnel up`) launches a real tor process and exposes a working
+            SOCKS proxy (CI-verified). The **system-wide** native tunnel adapters
+            (Linux TUN+nftables helper, Android `VpnService`, Windows
+            Wintun/WFP service) are now implemented but **not yet leak-verified
+            on real devices**, so TorTunnel must **not** be relied on for real
+            anonymity until `docs/VERIFICATION_CHECKLIST.md` is completed and the
+            stable blockers in `docs/audit/STABLE_BLOCKERS.md` are closed.
 
             ### Artifacts
-            - `android-apk` — debug, unsigned APK
-            - `linux-cli` — headless `tortunnel` CLI (x86_64)
+            - `android-apk` — debug, unsigned APK (VpnService)
+            - `linux-cli` — headless `tortunnel` CLI + privileged `tortunnel-helper` (x86_64)
             - `linux-desktop` — Flutter desktop bundle (x64)
-            - `windows-desktop` — Flutter desktop app (x64)
+            - `windows-desktop` — Flutter desktop app + `tortunnel-winsvc` (x64)
 
             Built automatically by the release workflow.
