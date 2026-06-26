@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- `docs/VERIFICATION_CHECKLIST.md`: the device leak-test, kill-switch, signing,
+  and audit checklist that gates the production-ready (`protected`) status.
 - Windows tunnel **service** (`tortunnel-winsvc`): Wintun (via `tun2proxy`) plus a
   WFP-backed kill-switch through the Windows firewall (block all outbound except
   tor), with fail-closed teardown. Pure command builders unit-tested.

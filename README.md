@@ -38,20 +38,24 @@ the difference.
 ## Project status
 
 > [!IMPORTANT]
-> **TorTunnel is an alpha scaffold, not yet a production VPN.** The Flutter UI and
-> Rust core are functional and fully tested, and the Dart ⇄ Rust FFI bridge works.
-> The privileged, system-wide **native tunnel adapters are not implemented yet**,
-> so Strict Mode never reports `protected`. Do not rely on this build for real
-> anonymity until the [stable blockers](docs/audit/STABLE_BLOCKERS.md) are closed
-> and an external audit is complete.
+> **TorTunnel is an alpha, not yet a production VPN.** The Flutter UI and Rust
+> core are functional and fully tested, the FFI bridge works, and the headless
+> `tortunnel up` launches a real tor process with a working SOCKS proxy
+> (CI-verified). The privileged, system-wide **native tunnel adapters are now
+> implemented (Linux helper, Android `VpnService`, Windows service) but have
+> not been leak-verified on real devices**, so Strict Mode never reports
+> `protected`. Do not rely on this build for real anonymity until the
+> [verification checklist](docs/VERIFICATION_CHECKLIST.md) passes, the
+> [stable blockers](docs/audit/STABLE_BLOCKERS.md) are closed, and an external
+> audit is complete.
 
 | Component | State |
 | --- | --- |
 | Flutter UI (`lib/`) | ✅ Functional, analyzed, tested |
 | Rust core + FFI (`core/`) | ✅ Functional, unit-tested, CI-green |
-| Tor runtime manager | 🚧 Control/bootstrap/launch plumbing landed; process supervision next |
-| Native tunnel adapters | ❌ Contracts only (Android/Linux/Windows) |
-| Code signing · external audit | ⛔ Required for stable; human-gated |
+| Tor engine (`tortunnel up`) | ✅ Launches real tor + working SOCKS proxy (CI-verified) |
+| Native tunnel adapters | 🚧 Implemented (Linux helper, Android VpnService, Windows service) — **not yet leak-verified** |
+| Device leak tests · code signing · audit | ⛔ Required for stable; human-gated ([checklist](docs/VERIFICATION_CHECKLIST.md)) |
 
 ## Architecture
 
